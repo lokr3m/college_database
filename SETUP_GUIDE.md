@@ -42,7 +42,7 @@ define('DB_HOST', 'localhost');    // Your MySQL host
 define('DB_PORT', '3306');         // MySQL port
 define('DB_NAME', 'college_db');   // Database name
 define('DB_USER', 'root');         // Your MySQL username
-define('DB_PASS', 'your_password'); // Your MySQL password
+define('DB_PASS', 'mysql'); // Your MySQL password
 ```
 
 ### 4. Start Application
