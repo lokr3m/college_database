@@ -4,13 +4,13 @@
 
 The system is designed to create a comprehensive management system for educational institutions with the following capabilities:
 
-#### School Management
-- ✅ System supports multiple schools
-- ✅ Each school has a unique name and location
+#### College Management
+- ✅ System supports multiple colleges
+- ✅ Each college has a unique name and location
 
-#### Group/Class Management
-- ✅ Each school has one or more groups (e.g., 10A, 11B)
-- ✅ Groups always belong to a specific school
+#### Group Management
+- ✅ Each college has one or more groups (e.g., TA-23B, IT-25V)
+- ✅ Groups always belong to a specific college
 
 #### Student Management
 - ✅ Students always belong to one group
@@ -19,7 +19,7 @@ The system is designed to create a comprehensive management system for education
 - ✅ Students have representatives/guardians
 
 #### Teacher Management
-- ✅ Teachers are associated with one specific school
+- ✅ Teachers are associated with one specific college
 - ✅ Teacher records include first and last name
 - ✅ Teachers can teach multiple groups and multiple subjects
 - ✅ System includes teacher salary data and payment information
@@ -41,7 +41,7 @@ The system is designed to create a comprehensive management system for education
 
 ### Non-Functional Requirements
 
-- ✅ **Extensibility**: System supports database expansion (new schools, new subjects)
+- ✅ **Extensibility**: System supports database expansion (new colleges, new subjects)
 - ✅ **Normalization**: Data is relationally structured to avoid duplication
 - ✅ **Data Types**: All fields use appropriate data types
 - ✅ **Query Support**: Database supports filtering and JOIN operations
@@ -50,9 +50,9 @@ The system is designed to create a comprehensive management system for education
 ### Relationship Requirements
 
 The system enforces the following relationships:
-- Each group belongs to one school
+- Each group belongs to one college
 - Each student belongs to one group
-- Each teacher belongs to one school
+- Each teacher belongs to one college
 - Each lesson is associated with one teacher and one group
 - Each grade is associated with one student and one specific lesson
 
@@ -60,10 +60,10 @@ The system enforces the following relationships:
 
 The system provides access for different user roles:
 
-#### User A (School Secretary)
-- ✅ Add new groups to a school
+#### User A (college Secretary)
+- ✅ Add new groups to a college
 - ✅ Add new students to a group
-- ✅ Check which teachers teach in group 10A
+- ✅ Check which teachers teach in group TA-23B
 
 #### User B (Teacher)
 - ✅ Add student grades for their lessons
@@ -87,13 +87,13 @@ Potential features for future development:
 
 Süsteem on loodud haridusasutuste tervikliku haldussüsteemi loomiseks järgmiste võimalustega:
 
-#### Kooli Haldamine
-- ✅ Süsteem toetab mitut kooli
-- ✅ Igal koolil on unikaalne nimi ja asukoht
+#### kolledži Haldamine
+- ✅ Süsteem toetab mitut kolledžit
+- ✅ Igal kolledžil on unikaalne nimi ja asukoht
 
 #### Grupi/Klassi Haldamine
-- ✅ Igal koolil on üks või mitu gruppi (nt 10A, 11B)
-- ✅ Grupid kuuluvad alati konkreetsesse kooli
+- ✅ Igal kolledžil on üks või mitu gruppi (nt TA-23B, IT-25V)
+- ✅ Grupid kuuluvad alati konkreetsesse kolledži
 
 #### Õpilaste Haldamine
 - ✅ Õpilased kuuluvad alati ühte gruppi
@@ -102,7 +102,7 @@ Süsteem on loodud haridusasutuste tervikliku haldussüsteemi loomiseks järgmis
 - ✅ Õpilastel on esindajad/eestkostjad
 
 #### Õpetajate Haldamine
-- ✅ Õpetajad on seotud ühe konkreetse kooliga
+- ✅ Õpetajad on seotud ühe konkreetse kolledžiga
 - ✅ Õpetaja andmed sisaldavad ees- ja perekonnanime
 - ✅ Õpetajad saavad õpetada mitut gruppi ja mitut ainet
 - ✅ Süsteem sisaldab õpetajate palga- ja makseinfot
@@ -124,7 +124,7 @@ Süsteem on loodud haridusasutuste tervikliku haldussüsteemi loomiseks järgmis
 
 ### Mittefunktsionaalsed Nõuded
 
-- ✅ **Laiendatavus**: Süsteem toetab andmebaasi laienemist (uued koolid, uued ained)
+- ✅ **Laiendatavus**: Süsteem toetab andmebaasi laienemist (uued kolledžid, uued ained)
 - ✅ **Normaliseerimine**: Andmed on relatsiooniliselt struktureeritud, et vältida dubleerimist
 - ✅ **Andmetüübid**: Kõik väljad kasutavad sobivaid andmetüüpe
 - ✅ **Päringute Tugi**: Andmebaas toetab filtreerimist ja JOIN operatsioone
@@ -133,9 +133,9 @@ Süsteem on loodud haridusasutuste tervikliku haldussüsteemi loomiseks järgmis
 ### Seoste Nõuded
 
 Süsteem jõustab järgmised seosed:
-- Iga grupp kuulub ühte kooli
+- Iga grupp kuulub ühte kolledži
 - Iga õpilane kuulub ühte gruppi
-- Iga õpetaja kuulub ühte kooli
+- Iga õpetaja kuulub ühte kolledži
 - Iga õppetund on seotud ühe õpetaja ja ühe grupiga
 - Iga hinne on seotud ühe õpilase ja ühe konkreetse õppetunniga
 
@@ -143,10 +143,10 @@ Süsteem jõustab järgmised seosed:
 
 Süsteem pakub juurdepääsu erinevatele kasutajarollidele:
 
-#### Kasutaja A (Kooli Sekretär)
-- ✅ Lisa kooli uusi gruppe
+#### Kasutaja A (kolledži Sekretär)
+- ✅ Lisa kolledži uusi gruppe
 - ✅ Lisa gruppi uusi õpilasi
-- ✅ Kontrolli, millised õpetajad õpetavad grupis 10A
+- ✅ Kontrolli, millised õpetajad õpetavad grupis TA-23B
 
 #### Kasutaja B (Õpetaja)
 - ✅ Lisa õpilaste hindeid oma õppetundidele
