@@ -12,6 +12,89 @@ This college database system manages the following relationships:
 - Each instructor can take any number of courses, and a course can be taken by only one instructor
 - A student can enroll in any number of courses and each course can have any number of students
 
+## 🎯 Project Requirements
+
+### Functional Requirements
+
+The system is designed to create a comprehensive management system for educational institutions with the following capabilities:
+
+#### School Management
+- ✅ System supports multiple schools
+- ✅ Each school has a unique name and location
+
+#### Group/Class Management
+- ✅ Each school has one or more groups (e.g., 10A, 11B)
+- ✅ Groups always belong to a specific school
+
+#### Student Management
+- ✅ Students always belong to one group
+- ✅ Student records include first name and last name
+- ✅ Multiple students with the same name can exist in different groups
+- ✅ Students have representatives/guardians
+
+#### Teacher Management
+- ✅ Teachers are associated with one specific school
+- ✅ Teacher records include first and last name
+- ✅ Teachers can teach multiple groups and multiple subjects
+- ✅ System includes teacher salary data and payment information
+- ✅ Teacher contact information is stored (multiple phone numbers and addresses possible per teacher)
+
+#### Class/Lesson Management
+- ✅ Lessons are linked to a teacher and a group
+- ✅ Lesson information includes subject name and date
+- ✅ Each lesson belongs to a specific group
+
+#### Grade Management
+- ✅ Each grade is associated with a specific student and lesson
+- ✅ Grade values range from 1 to 5 (or other scale as needed)
+- ✅ Grades can include free-text comments (e.g., "absent", "late")
+
+#### Classroom Management
+- ✅ Rooms/classrooms are tracked
+- ✅ Additional information can be stored (e.g., maintenance needs, technician notes)
+
+### Non-Functional Requirements
+
+- ✅ **Extensibility**: System supports database expansion (new schools, new subjects)
+- ✅ **Normalization**: Data is relationally structured to avoid duplication
+- ✅ **Data Types**: All fields use appropriate data types
+- ✅ **Query Support**: Database supports filtering and JOIN operations
+- ✅ **Performance**: Data entry and query performance at reasonable levels
+
+### Relationship Requirements
+
+The system enforces the following relationships:
+- Each group belongs to one school
+- Each student belongs to one group
+- Each teacher belongs to one school
+- Each lesson is associated with one teacher and one group
+- Each grade is associated with one student and one specific lesson
+
+### User Role Scenarios
+
+The system provides access for different user roles:
+
+#### User A (School Secretary)
+- ✅ Add new groups to a school
+- ✅ Add new students to a group
+- ✅ Check which teachers teach in group 10A
+
+#### User B (Teacher)
+- ✅ Add student grades for their lessons
+- ✅ View grades given in a specific lesson (e.g., mathematics on September 10th)
+
+#### User C (Student or Parent)
+- ✅ View summary of grades for the last month
+
+### Future Expansion Possibilities
+
+Potential features for future development:
+- Separate subjects table (for better normalization)
+- User accounts (students, teachers, administrators)
+- Absence/attendance management
+- Schedule/timetable management
+- Inventory management
+
 ## 📊 Database Schema
 
 **Tables:**
