@@ -95,6 +95,89 @@ Potential features for future development:
 - Schedule/timetable management
 - Inventory management
 
+## 🎯 Projekti Nõuded (Estonian Version)
+
+### Funktsionaalsed Nõuded
+
+Süsteem on loodud haridusasutuste tervikliku haldussüsteemi loomiseks järgmiste võimalustega:
+
+#### Kooli Haldamine
+- ✅ Süsteem toetab mitut kooli
+- ✅ Igal koolil on unikaalne nimi ja asukoht
+
+#### Grupi/Klassi Haldamine
+- ✅ Igal koolil on üks või mitu gruppi (nt 10A, 11B)
+- ✅ Grupid kuuluvad alati konkreetsesse kooli
+
+#### Õpilaste Haldamine
+- ✅ Õpilased kuuluvad alati ühte gruppi
+- ✅ Õpilase andmed sisaldavad ees- ja perekonnanime
+- ✅ Mitu sama nimega õpilast võib eksisteerida erinevates gruppides
+- ✅ Õpilastel on esindajad/eestkostjad
+
+#### Õpetajate Haldamine
+- ✅ Õpetajad on seotud ühe konkreetse kooliga
+- ✅ Õpetaja andmed sisaldavad ees- ja perekonnanime
+- ✅ Õpetajad saavad õpetada mitut gruppi ja mitut ainet
+- ✅ Süsteem sisaldab õpetajate palga- ja makseinfot
+- ✅ Õpetajate kontaktandmed on salvestatud (õpetajal võib olla mitu telefoninumbrit ja aadressi)
+
+#### Tunni/Õppetunni Haldamine
+- ✅ Õppetunnid on seotud õpetaja ja grupiga
+- ✅ Tunni info sisaldab aine nime ja kuupäeva
+- ✅ Iga õppetund kuulub konkreetsesse gruppi
+
+#### Hinnete Haldamine
+- ✅ Iga hinne on seotud konkreetse õpilase ja õppetunniga
+- ✅ Hinnete väärtused ulatuvad 1-st 5-ni (või muu skaala vastavalt vajadusele)
+- ✅ Hinded võivad sisaldada vabateksti kommentaare (nt "puudus", "hilines")
+
+#### Klassiruumide Haldamine
+- ✅ Ruumid/klassid on jälgitavad
+- ✅ Lisainfot saab salvestada (nt hoolduse vajadused, tehnikute märkused)
+
+### Mittefunktsionaalsed Nõuded
+
+- ✅ **Laiendatavus**: Süsteem toetab andmebaasi laienemist (uued koolid, uued ained)
+- ✅ **Normaliseerimine**: Andmed on relatsiooniliselt struktureeritud, et vältida dubleerimist
+- ✅ **Andmetüübid**: Kõik väljad kasutavad sobivaid andmetüüpe
+- ✅ **Päringute Tugi**: Andmebaas toetab filtreerimist ja JOIN operatsioone
+- ✅ **Jõudlus**: Andmesisestuse ja päringu jõudlus mõistlikul tasemel
+
+### Seoste Nõuded
+
+Süsteem jõustab järgmised seosed:
+- Iga grupp kuulub ühte kooli
+- Iga õpilane kuulub ühte gruppi
+- Iga õpetaja kuulub ühte kooli
+- Iga õppetund on seotud ühe õpetaja ja ühe grupiga
+- Iga hinne on seotud ühe õpilase ja ühe konkreetse õppetunniga
+
+### Kasutajarolli Stsenaariumid
+
+Süsteem pakub juurdepääsu erinevatele kasutajarollidele:
+
+#### Kasutaja A (Kooli Sekretär)
+- ✅ Lisa kooli uusi gruppe
+- ✅ Lisa gruppi uusi õpilasi
+- ✅ Kontrolli, millised õpetajad õpetavad grupis 10A
+
+#### Kasutaja B (Õpetaja)
+- ✅ Lisa õpilaste hindeid oma õppetundidele
+- ✅ Vaata konkreetses õppetunnis antud hindeid (nt matemaatika 10. septembril)
+
+#### Kasutaja C (Õpilane või Vanem)
+- ✅ Vaata viimase kuu hinnete kokkuvõtet
+
+### Tuleviku Laiendusvõimalused
+
+Potentsiaalsed funktsioonid tulevaseks arenduseks:
+- Eraldi ainete tabel (parema normaliseerimise jaoks)
+- Kasutajakontod (õpilased, õpetajad, administraatorid)
+- Puudumiste/kohaloleku haldamine
+- Tunniplaani haldamine
+- Inventari haldamine
+
 ## 📊 Database Schema
 
 **Tables:**
