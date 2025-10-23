@@ -36,14 +36,69 @@ mysql> exit;
 
 ### 3. Configure Backend
 
+**IMPORTANT SECURITY NOTE / TÄHTIS TURVAMÄRKUS:**
+
+For production environments, DO NOT use the 'root' MySQL user!
+The root user has dangerous privileges including:
+- DROP DATABASE (can delete entire database)
+- DROP TABLE (can delete tables)
+- CREATE USER (can create new users)
+
+Tootmiskeskkondades ÄRA KASUTA 'root' MySQL kasutajat!
+Root kasutajal on ohtlikud õigused, sealhulgas:
+- DROP DATABASE (saab kustutada terve andmebaasi)
+- DROP TABLE (saab kustutada tabeleid)
+- CREATE USER (saab luua uusi kasutajaid)
+
+**Option A: Development (Not Secure - Only for Testing)**
+
 Edit `backend/config.php`:
 ```php
-define('DB_HOST', 'localhost');    // Your MySQL host
-define('DB_PORT', '3306');         // MySQL port
-define('DB_NAME', 'college_db');   // Database name
-define('DB_USER', 'root');         // Your MySQL username
-define('DB_PASS', 'mysql'); // Your MySQL password
+define('DB_HOST', 'localhost');
+define('DB_PORT', '3306');
+define('DB_NAME', 'college_db');
+define('DB_USER', 'root');              // Only for development!
+define('DB_PASS', 'your_root_password'); // Only for development!
 ```
+
+**Option B: Production (Secure - Recommended)**
+
+1. Create a limited-privilege database user:
+   ```bash
+   mysql -u root -p
+   ```
+
+2. Run these SQL commands:
+   ```sql
+   -- Create application user with limited privileges
+   CREATE USER 'college_app'@'localhost' IDENTIFIED BY 'your_secure_password';
+   
+   -- Grant only necessary permissions (SELECT, INSERT, UPDATE, DELETE)
+   GRANT SELECT, INSERT, UPDATE, DELETE ON college_db.* TO 'college_app'@'localhost';
+   
+   -- Apply changes
+   FLUSH PRIVILEGES;
+   
+   -- Verify permissions
+   SHOW GRANTS FOR 'college_app'@'localhost';
+   
+   EXIT;
+   ```
+
+3. Edit `backend/config.php` to use the secure user:
+   ```php
+   define('DB_HOST', 'localhost');
+   define('DB_PORT', '3306');
+   define('DB_NAME', 'college_db');
+   define('DB_USER', 'college_app');           // Limited privilege user
+   define('DB_PASS', 'your_secure_password');  // Strong password
+   ```
+
+**Benefits of limited-privilege user / Piiratud õigustega kasutaja eelised:**
+- ✅ Cannot drop tables or database / Ei saa kustutada tabeleid ega andmebaasi
+- ✅ Cannot create or modify users / Ei saa luua ega muuta kasutajaid
+- ✅ Can only perform CRUD operations (Create, Read, Update, Delete)
+- ✅ Limits damage if credentials are compromised / Piirab kahju, kui volitused on ohustatud
 
 ### 4. Start Application
 
