@@ -126,7 +126,7 @@ CREATE TABLE Instructors (
 --                 Automaatselt uuendatud, kui kirje muutub
 --
 -- Historical Data / Ajaloolised Andmed:
---   ⚠️ IMPORTANT / TÄHTIS:
+--   [WARNING] IMPORTANT / TÄHTIS:
 --   This table tracks ONLY the CURRENT department head. Records of PREVIOUS heads are NOT preserved.
 --   See tabel jälgib AINULT PRAEGUST osakonnajuhatajat. Kirjeid VARASEMATEST juhatajatatest EI SÄILITATA.
 --   
@@ -145,7 +145,7 @@ CREATE TABLE Instructors (
 --   This means previous heads and their tenure periods are NOT preserved.
 --   See tähendab, et varasemaid juhatajaid ja nende ametiperioode EI SÄILITATA.
 --
---   ⚙️ FUTURE ENHANCEMENT / TULEVIKU TÄIUSTUS:
+--   [ENHANCEMENT] FUTURE ENHANCEMENT / TULEVIKU TÄIUSTUS:
 --   If you need to track the full history of department leadership changes:
 --   Kui on vaja jälgida osakonna juhtimise muutuste täielikku ajalugu:
 --   

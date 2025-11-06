@@ -134,7 +134,7 @@ See on ühendav/siduv tabel, mis loob 1:1 seose Osakondade ja Õpetajate vahel j
 
 **Historical Data / Ajaloolised Andmed**:
 
-⚠️ **IMPORTANT / TÄHTIS**:
+**[WARNING] IMPORTANT / TÄHTIS**:
 This table tracks **ONLY the CURRENT department head**. Records of **PREVIOUS heads are NOT preserved**.
 See tabel jälgib **AINULT PRAEGUST osakonnajuhatajat**. Kirjeid **VARASEMATEST juhatajatatest EI SÄILITATA**.
 
@@ -148,7 +148,7 @@ start_date väli näitab, millal praeguse juhataja ametiaeg algas, kuid kui mä�
 This means previous heads and their tenure periods are NOT preserved.
 See tähendab, et varasemaid juhatajaid ja nende ametiperioode EI SÄILITATA.
 
-⚙️ **FUTURE ENHANCEMENT / TULEVIKU TÄIUSTUS**:
+**[ENHANCEMENT] FUTURE ENHANCEMENT / TULEVIKU TÄIUSTUS**:
 
 If you need to track the full history of department leadership changes:
 Kui on vaja jälgida osakonna juhtimise muutuste täielikku ajalugu:
