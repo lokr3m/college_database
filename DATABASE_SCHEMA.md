@@ -374,34 +374,34 @@ For optimal query performance, the following indexes are created:
 
 ## Business Rules Enforced by Schema
 
-1. ✅ An instructor works in only one department (department_id is NOT NULL)
-2. ✅ A course is taught by only one instructor (instructor_id is single value)
-3. ✅ Each department has at most one head (department_id is PRIMARY KEY in DepartmentHeads)
-4. ✅ An instructor can be head of only one department (instructor_id is UNIQUE)
-5. ✅ Students can enroll in multiple courses (Many-to-Many via Enrollments)
-6. ✅ Courses can have multiple students (Many-to-Many via Enrollments)
-7. ✅ No duplicate enrollments (UNIQUE constraint on student_id + course_id)
+1. [ENFORCED] An instructor works in only one department (department_id is NOT NULL)
+2. [ENFORCED] A course is taught by only one instructor (instructor_id is single value)
+3. [ENFORCED] Each department has at most one head (department_id is PRIMARY KEY in DepartmentHeads)
+4. [ENFORCED] An instructor can be head of only one department (instructor_id is UNIQUE)
+5. [ENFORCED] Students can enroll in multiple courses (Many-to-Many via Enrollments)
+6. [ENFORCED] Courses can have multiple students (Many-to-Many via Enrollments)
+7. [ENFORCED] No duplicate enrollments (UNIQUE constraint on student_id + course_id)
 
 ## Security Best Practices / Turvalisuse Parimad Tavad
 
 **Database User Permissions / Andmebaasi kasutaja õigused:**
 
-⚠️ **CRITICAL WARNING / KRIITILINE HOIATUS:**
+**[CRITICAL WARNING] / [KRIITILINE HOIATUS]:**
 
 **DO NOT use the 'root' MySQL user for application access!**
 **ÄRA kasuta 'root' MySQL kasutajat rakenduse juurdepääsuks!**
 
 The 'root' user has dangerous privileges:
-- ❌ DROP DATABASE (can delete entire database)
-- ❌ DROP TABLE (can delete tables)
-- ❌ CREATE USER (can create new users)
-- ❌ GRANT (can give permissions to others)
+- [NOT ALLOWED] DROP DATABASE (can delete entire database)
+- [NOT ALLOWED] DROP TABLE (can delete tables)
+- [NOT ALLOWED] CREATE USER (can create new users)
+- [NOT ALLOWED] GRANT (can give permissions to others)
 
 Root kasutajal on ohtlikud õigused:
-- ❌ DROP DATABASE (saab kustutada terve andmebaasi)
-- ❌ DROP TABLE (saab kustutada tabeleid)
-- ❌ CREATE USER (saab luua uusi kasutajaid)
-- ❌ GRANT (saab anda teistele õigusi)
+- [NOT ALLOWED] DROP DATABASE (saab kustutada terve andmebaasi)
+- [NOT ALLOWED] DROP TABLE (saab kustutada tabeleid)
+- [NOT ALLOWED] CREATE USER (saab luua uusi kasutajaid)
+- [NOT ALLOWED] GRANT (saab anda teistele õigusi)
 
 **Recommended Approach / Soovitatav lähenemisviis:**
 
@@ -413,16 +413,16 @@ Root kasutajal on ohtlikud õigused:
    ```
 
 2. This user can ONLY:
-   - ✅ SELECT (read data)
-   - ✅ INSERT (create new records)
-   - ✅ UPDATE (modify records)
-   - ✅ DELETE (remove records)
+   - [ALLOWED] SELECT (read data)
+   - [ALLOWED] INSERT (create new records)
+   - [ALLOWED] UPDATE (modify records)
+   - [ALLOWED] DELETE (remove records)
 
 3. This user CANNOT:
-   - ❌ DROP tables or databases
-   - ❌ CREATE or ALTER table structures
-   - ❌ Create or modify users
-   - ❌ Change permissions
+   - [NOT ALLOWED] DROP tables or databases
+   - [NOT ALLOWED] CREATE or ALTER table structures
+   - [NOT ALLOWED] Create or modify users
+   - [NOT ALLOWED] Change permissions
 
 See detailed instructions in:
 - `database/config.sql`
