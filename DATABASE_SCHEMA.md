@@ -109,11 +109,16 @@ Salvestab õpetajate infot ja osakonna kuuluvust
 **Purpose / Eesmärk**: Manages department head assignments (one head per department)
 Haldab osakonnajuhatajate määramist (üks juhataja osakonna kohta)
 
+**Table Structure Explained / Tabeli struktuuri selgitus**:
+This is a junction/linking table that creates a 1:1 relationship between Departments and Instructors for management purposes. The department_id serves as the primary key, ensuring each department can have only one head record. The instructor_id is UNIQUE, ensuring an instructor can lead only one department.
+
+See on ühendav/siduv tabel, mis loob 1:1 seose Osakondade ja Õpetajate vahel juhtimise eesmärgil. department_id toimib primaarvõtmena, tagades et igal osakonnal saab olla ainult üks juhataja kirje. instructor_id on UNIQUE, tagades et õpetaja saab juhtida ainult ühte osakonda.
+
 | Column | Type | Constraints | Description | Kirjeldus (Estonian) |
 |--------|------|-------------|-------------|----------------------|
-| department_id | INT | PRIMARY KEY, FOREIGN KEY | Department reference | Osakonna viide |
-| instructor_id | INT | UNIQUE, NOT NULL, FOREIGN KEY | Instructor serving as head | Juhatajana töötav õpetaja |
-| start_date | DATE | NOT NULL | Start date as head | Juhatajana alustamise kuupäev |
+| department_id | INT | PRIMARY KEY, FOREIGN KEY | Department being led (ensures one head per department) | Juhitav osakond (tagab ühe juhataja osakonna kohta) |
+| instructor_id | INT | UNIQUE, NOT NULL, FOREIGN KEY | Instructor serving as head (ensures instructor leads only one department) | Juhatajana töötav õpetaja (tagab, et õpetaja juhib ainult ühte osakonda) |
+| start_date | DATE | NOT NULL | Date when this instructor became head (tracks when current leadership began) | Kuupäev, millal see õpetaja sai juhatajaks (jälgib praeguse juhtimise algust) |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Record creation time (automatic) | Kirje loomise aeg (automaatne) |
 | updated_at | TIMESTAMP | ON UPDATE CURRENT_TIMESTAMP | Last update time (automatic) | Viimase uuenduse aeg (automaatne) |
 
@@ -122,15 +127,46 @@ Haldab osakonnajuhatajate määramist (üks juhataja osakonna kohta)
 - One-to-One with Instructors (üks-ühele õpetajatega)
 
 **Constraints / Piirangud**:
-- Each department has exactly ONE head / Igal osakonnal on täpselt ÜKS juhataja
-- An instructor can be head of only ONE department / Õpetaja saab olla ainult ÜHE osakonna juhataja
-- The instructor must work in the department they head / Õpetaja peab töötama osakonnas, mida ta juhib
+- Each department can have at most ONE head at any given time / Igal osakonnal võib olla kõige rohkem ÜKS juhataja igal ajahetkel
+- An instructor can be head of only ONE department at any given time / Õpetaja saab olla ainult ÜHE osakonna juhataja igal ajahetkel
+- The instructor must work in the department they are heading / Õpetaja peab töötama osakonnas, mida ta juhib
+- A department can exist without a head (no record in this table) / Osakond võib eksisteerida ilma juhatajata (pole kirjet selles tabelis)
 
 **Historical Data / Ajaloolised Andmed**:
-- **Current Design**: Only tracks the CURRENT department head. When a new head is assigned, the old record is replaced.
-- **Praegune disain**: Jälgib ainult PRAEGUST osakonnajuhatajat. Kui määratakse uus juhataja, asendatakse vana kirje.
-- **Future Consideration**: If historical tracking is needed, create a separate "DepartmentHeadHistory" table with fields like `end_date` and `reason`.
-- **Tuleviku kaalutlus**: Kui ajaloolist jälgimist on vaja, loo eraldi "DepartmentHeadHistory" tabel väljadega nagu `end_date` ja `reason`.
+
+**[WARNING] IMPORTANT / TÄHTIS**:
+This table tracks **ONLY the CURRENT department head**. Records of **PREVIOUS heads are NOT preserved**.
+See tabel jälgib **AINULT PRAEGUST osakonnajuhatajat**. Kirjeid **VARASEMATEST juhatajatatest EI SÄILITATA**.
+
+The start_date field tells when the current head's tenure began, but when a new head is assigned, information about the previous head is lost.
+start_date väli näitab, millal praeguse juhataja ametiaeg algas, kuid kui määratakse uus juhataja, läheb informatsioon varasema juhataja kohta kaduma.
+
+**When a new head is assigned / Kui määratakse uus juhataja**:
+1. The old record is UPDATED (start_date changes) OR / Vana kirje UUENDATAKSE (start_date muutub) VÕI
+2. The old record is DELETED and a new one is INSERTED / Vana kirje KUSTUTATAKSE ja lisatakse uus
+
+This means previous heads and their tenure periods are NOT preserved.
+See tähendab, et varasemaid juhatajaid ja nende ametiperioode EI SÄILITATA.
+
+**[ENHANCEMENT] FUTURE ENHANCEMENT / TULEVIKU TÄIUSTUS**:
+
+If you need to track the full history of department leadership changes:
+Kui on vaja jälgida osakonna juhtimise muutuste täielikku ajalugu:
+
+Create a separate **"DepartmentHeadHistory"** table:
+Loo eraldi **"DepartmentHeadHistory"** tabel:
+- `head_history_id` (PRIMARY KEY, AUTO_INCREMENT)
+- `department_id` (FOREIGN KEY)
+- `instructor_id` (FOREIGN KEY)
+- `start_date` (NOT NULL) - when they became head / millal said juhatajaks
+- `end_date` (NULL) - when they stepped down / millal lahkusid ametist
+- `reason` (VARCHAR) - reason for change / muutuse põhjus
+- `created_at`, `updated_at` (TIMESTAMP)
+
+With this history table / Selle ajalootabeliga:
+- You can track ALL past and present heads / Saad jälgida KÕIKI endisi ja praeguseid juhatajaid
+- You can see how long each person served / Näed kui kaua iga isik teenis
+- You can analyze leadership transition patterns / Saad analüüsida juhtimise ülemineku mustreid
 
 ---
 
@@ -146,36 +182,101 @@ Salvestab kursuste pakkumisi ja ülesandeid
 | department_id | INT | NOT NULL, FOREIGN KEY | Department offering course | Kursust pakkuv osakond |
 | instructor_id | INT | FOREIGN KEY | Assigned instructor | Määratud õpetaja |
 | credits | INT | NOT NULL, DEFAULT 3 | Credit hours/points | Krediidipunktid |
-| semester | VARCHAR(20) | | Academic term when course is offered (e.g., "Fall 2024", "Spring 2025", "Sügis 2024") | Akadeemiline periood, millal kursust pakutakse |
-| year | INT | | Academic year (e.g., 2024, 2025) | Õppeaasta |
-| room_number | VARCHAR(20) | | Classroom/lecture hall location (e.g., "A-101", "Room 305") | Klassiruumi/loenguruumi asukoht |
-| schedule | VARCHAR(100) | | Class meeting times (e.g., "Mon/Wed 10:00-11:30", "E/K 10:00-11:30") | Tundide toimumise ajad |
+| semester | VARCHAR(20) | | Academic term (see detailed explanation below) | Akadeemiline periood (vaata üksikasjalikku selgitust allpool) |
+| year | INT | | Academic year (see detailed explanation below) | Õppeaasta (vaata üksikasjalikku selgitust allpool) |
+| room_number | VARCHAR(20) | | Classroom location (see detailed explanation below) | Klassiruumi asukoht (vaata üksikasjalikku selgitust allpool) |
+| schedule | VARCHAR(100) | | Class meeting times (see detailed explanation below) | Tundide toimumise ajad (vaata üksikasjalikku selgitust allpool) |
 | created_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | Record creation time (automatic) | Kirje loomise aeg (automaatne) |
 | updated_at | TIMESTAMP | ON UPDATE CURRENT_TIMESTAMP | Last update time (automatic) | Viimase uuenduse aeg (automaatne) |
 
-**Field Explanations / Väljade selgitused**:
+**Scheduling Fields Detailed Explanation / Ajakava väljade üksikasjalik selgitus**:
 
-**semester** (semester/trimester):
-- Indicates WHEN the course runs (which academic term)
-- Examples: "Fall 2024", "Spring 2025", "Summer 2024"
-- Estonian: "Sügis 2024", "Kevad 2025", "Suvi 2024"
-- Näitab, MILLAL kursus toimub (milline akadeemiline periood)
+These four fields work together to define **WHEN** and **WHERE** a course is offered:
+Need neli välja töötavad koos, et määratleda, **MILLAL** ja **KUS** kursust pakutakse:
 
-**year** (õppeaasta):
-- Academic year (e.g., 2024, 2025)
-- Combined with semester to identify the course offering period
-- Koos semestriga määrab kursuse pakkumise perioodi
+#### **[SEMESTER] semester** - ACADEMIC TERM / AKADEEMILINE PERIOOD
+**Purpose**: Indicates which academic term/semester the course is offered
+**Eesmärk**: Näitab, millises akadeemilises perioodis/semestris kursust pakutakse
 
-**room_number** (klassiruumi number):
-- Physical location where classes take place
-- Examples: "A-101", "Room 305", "Building B-201"
-- Füüsiline asukoht, kus tunnid toimuvad
+**Examples / Näited**:
+- "Fall 2024" / "Sügis 2024" - Autumn semester
+- "Spring 2025" / "Kevad 2025" - Spring semester
+- "Summer 2024" / "Suvi 2024" - Summer session
+- "1. semester" - First semester
+- "2. semester" - Second semester
 
-**schedule** (ajakava):
-- Class meeting times during the week
-- Examples: "Mon/Wed 10:00-11:30", "Tue/Thu 14:00-16:00"
-- Estonian format: "E/K 10:00-11:30" (Esmaspäev/Kolmapäev)
-- Tundide toimumise ajad nädala jooksul
+**This answers**: "WHICH academic period is this course offered?"
+**See vastab**: "MILLISES akadeemilises perioodis seda kursust pakutakse?"
+
+#### **[YEAR] year** - ACADEMIC YEAR / ÕPPEAASTA
+**Purpose**: The calendar year for the course offering
+**Eesmärk**: Kalendriaasta kursuse pakkumisele
+
+**Examples / Näited**: 2024, 2025, 2026
+
+Combined with semester, this uniquely identifies the course offering period. For example: "Fall 2024" means autumn semester in year 2024.
+
+Koos semestriga määrab see unikaalselt kursuse pakkumise perioodi. Näiteks: "Sügis 2024" tähendab sügisemestrit aastal 2024.
+
+#### **[ROOM] room_number** - CLASSROOM LOCATION / KLASSIRUUMI ASUKOHT
+**Purpose**: Physical location where the course lectures/classes are held
+**Eesmärk**: Füüsiline asukoht, kus kursuse loengud/tunnid toimuvad
+
+**Examples / Näited**:
+- "A-101" - Room 101 in Building A
+- "Room 305" - Room number 305
+- "B-201" - Room 201 in Building B
+- "Lab 3" - Laboratory 3
+- "Auditorium 1" - Auditorium 1
+
+**This answers**: "WHERE does this course physically take place?"
+**See vastab**: "KUS see kursus füüsiliselt toimub?"
+
+**Note**: This is a simple text field for flexibility. In a more complex system, you might have a separate "Rooms" table with detailed information about each classroom (capacity, equipment, building location, etc.).
+
+**Märkus**: See on lihtne tekstiväli paindlikkuse tagamiseks. Keerukamas süsteemis võib olla eraldi "Ruumid" tabel üksikasjaliku infoga iga klassiruumi kohta (mahutavus, varustus, hoone asukoht jne).
+
+#### **[SCHEDULE] schedule** - WEEKLY MEETING TIMES / NÄDALASED KOHTUMISE AJAD
+**Purpose**: When during the week the course meets (days and times)
+**Eesmärk**: Millal nädala jooksul kursus toimub (päevad ja kellaajad)
+
+**Examples / Näited**:
+- "Mon/Wed 10:00-11:30" - Mondays and Wednesdays from 10:00 to 11:30
+- "E/K 10:00-11:30" - Esmaspäev/Kolmapäev (Estonian: Monday/Wednesday)
+- "Tue/Thu 14:00-16:00" - Tuesdays and Thursdays 2:00 PM to 4:00 PM
+- "Fri 09:00-12:00" - Fridays 9:00 AM to 12:00 PM
+- "MWF 13:00-14:00" - Monday, Wednesday, Friday 1:00 PM to 2:00 PM
+
+**This answers**: "WHEN during the week do students attend this course?"
+**See vastab**: "MILLAL nädala jooksul õpilased selles kursuses osalevad?"
+
+**Note**: This is a flexible text field that can accommodate various schedule formats. For a more sophisticated timetable system, you might create a separate "CourseSchedules" table with individual time slots.
+
+**Märkus**: See on paindlik tekstiväli, mis võib mahutada erinevaid ajakava formaate. Keerukama tunniplaani süsteemi jaoks võite luua eraldi "CourseSchedules" tabeli individuaalsete ajapesadega.
+
+#### **How These Fields Work Together / Kuidas need väljad koos töötavad**:
+
+**Example 1 / Näide 1**:
+```
+semester: "Fall 2024"
+year: 2024
+room_number: "A-101"
+schedule: "Mon/Wed 10:00-11:30"
+```
+**Meaning**: This course is offered in Fall semester of 2024, meets in room A-101, on Mondays and Wednesdays from 10:00 to 11:30.
+
+**Tähendus**: Seda kursust pakutakse 2024. aasta sügissemestril, toimub ruumis A-101, esmaspäeviti ja kolmapäeviti kella 10:00-11:30.
+
+**Example 2 / Näide 2**:
+```
+semester: "Spring 2025"
+year: 2025
+room_number: "Lab 3"
+schedule: "Tue 14:00-17:00"
+```
+**Meaning**: Spring 2025 course, in Lab 3, every Tuesday afternoon for 3 hours.
+
+**Tähendus**: 2025. aasta kevadkursus, Laboris 3, igal teisipäeval pärastlõunal 3 tundi.
 
 **Relationships / Seosed**:
 - Many-to-One with Departments (mitu-ühele osakondadega)
@@ -185,6 +286,23 @@ Salvestab kursuste pakkumisi ja ülesandeid
 **Constraints / Piirangud**:
 - Each course is taught by only ONE instructor / Iga kursust õpetab ainult ÜKS õpetaja
 - A course belongs to exactly ONE department / Kursus kuulub täpselt ÜHTE osakonda
+
+**Design Philosophy / Disaini filosoofia**:
+
+This flexible design allows for various scheduling patterns without requiring a complex timetable system. The text-based fields (semester, room_number, schedule) provide simplicity while the combination gives complete scheduling information.
+
+See paindlik disain võimaldab erinevaid ajakava mustreid ilma keerulise tunniplaani süsteemita. Tekstipõhised väljad (semester, room_number, schedule) pakuvad lihtsust, samas kui kombinatsioon annab täieliku ajakava informatsiooni.
+
+If you need more sophisticated features like:
+- Conflict detection (same room, same time)
+- Automated timetable generation
+- Room capacity management
+- Equipment requirements
+
+Consider creating additional tables:
+- Rooms (room_id, building, capacity, equipment)
+- TimeSlots (slot_id, day_of_week, start_time, end_time)
+- CourseSchedules (course_id, room_id, slot_id)
 
 ---
 
@@ -256,34 +374,34 @@ For optimal query performance, the following indexes are created:
 
 ## Business Rules Enforced by Schema
 
-1. ✅ An instructor works in only one department (department_id is NOT NULL)
-2. ✅ A course is taught by only one instructor (instructor_id is single value)
-3. ✅ Each department has at most one head (department_id is PRIMARY KEY in DepartmentHeads)
-4. ✅ An instructor can be head of only one department (instructor_id is UNIQUE)
-5. ✅ Students can enroll in multiple courses (Many-to-Many via Enrollments)
-6. ✅ Courses can have multiple students (Many-to-Many via Enrollments)
-7. ✅ No duplicate enrollments (UNIQUE constraint on student_id + course_id)
+1. [ENFORCED] An instructor works in only one department (department_id is NOT NULL)
+2. [ENFORCED] A course is taught by only one instructor (instructor_id is single value)
+3. [ENFORCED] Each department has at most one head (department_id is PRIMARY KEY in DepartmentHeads)
+4. [ENFORCED] An instructor can be head of only one department (instructor_id is UNIQUE)
+5. [ENFORCED] Students can enroll in multiple courses (Many-to-Many via Enrollments)
+6. [ENFORCED] Courses can have multiple students (Many-to-Many via Enrollments)
+7. [ENFORCED] No duplicate enrollments (UNIQUE constraint on student_id + course_id)
 
 ## Security Best Practices / Turvalisuse Parimad Tavad
 
 **Database User Permissions / Andmebaasi kasutaja õigused:**
 
-⚠️ **CRITICAL WARNING / KRIITILINE HOIATUS:**
+**[CRITICAL WARNING] / [KRIITILINE HOIATUS]:**
 
 **DO NOT use the 'root' MySQL user for application access!**
 **ÄRA kasuta 'root' MySQL kasutajat rakenduse juurdepääsuks!**
 
 The 'root' user has dangerous privileges:
-- ❌ DROP DATABASE (can delete entire database)
-- ❌ DROP TABLE (can delete tables)
-- ❌ CREATE USER (can create new users)
-- ❌ GRANT (can give permissions to others)
+- [NOT ALLOWED] DROP DATABASE (can delete entire database)
+- [NOT ALLOWED] DROP TABLE (can delete tables)
+- [NOT ALLOWED] CREATE USER (can create new users)
+- [NOT ALLOWED] GRANT (can give permissions to others)
 
 Root kasutajal on ohtlikud õigused:
-- ❌ DROP DATABASE (saab kustutada terve andmebaasi)
-- ❌ DROP TABLE (saab kustutada tabeleid)
-- ❌ CREATE USER (saab luua uusi kasutajaid)
-- ❌ GRANT (saab anda teistele õigusi)
+- [NOT ALLOWED] DROP DATABASE (saab kustutada terve andmebaasi)
+- [NOT ALLOWED] DROP TABLE (saab kustutada tabeleid)
+- [NOT ALLOWED] CREATE USER (saab luua uusi kasutajaid)
+- [NOT ALLOWED] GRANT (saab anda teistele õigusi)
 
 **Recommended Approach / Soovitatav lähenemisviis:**
 
@@ -295,16 +413,16 @@ Root kasutajal on ohtlikud õigused:
    ```
 
 2. This user can ONLY:
-   - ✅ SELECT (read data)
-   - ✅ INSERT (create new records)
-   - ✅ UPDATE (modify records)
-   - ✅ DELETE (remove records)
+   - [ALLOWED] SELECT (read data)
+   - [ALLOWED] INSERT (create new records)
+   - [ALLOWED] UPDATE (modify records)
+   - [ALLOWED] DELETE (remove records)
 
 3. This user CANNOT:
-   - ❌ DROP tables or databases
-   - ❌ CREATE or ALTER table structures
-   - ❌ Create or modify users
-   - ❌ Change permissions
+   - [NOT ALLOWED] DROP tables or databases
+   - [NOT ALLOWED] CREATE or ALTER table structures
+   - [NOT ALLOWED] Create or modify users
+   - [NOT ALLOWED] Change permissions
 
 See detailed instructions in:
 - `database/config.sql`
