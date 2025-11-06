@@ -1,47 +1,34 @@
 # Kooli Andmebaasisüsteemi Nõuded
 
-## PROJEKTI ÜLEVAADE
-
-### Eesmärk
-See projekt on terviklik andmebaasihaldussüsteem haridusasutustele, mis võimaldab hallata koole, rühmi, õpilasi, õpetajaid, õppetunde, hindeid ja klassiruume. Süsteem pakub kaasaegset veebipõhist kasutajaliidest ja RESTful API-d.
-
-### Tehnoloogia Stack
-- **Andmebaas**: MySQL 5.7 või uuem
-- **Backend**: PHP 7.4+ koos PDO MySQL laiendusega
-- **Frontend**: HTML5, CSS3, JavaScript (vanilla JS)
-- **Veebiserver**: Apache, Nginx või PHP sisseehitatud server
-- **API**: RESTful arhitektuur JSON andmevormingus
-
-### Projekti Struktuur
-```
-college_database/
-├── database/           # Andmebaasi skriptid
-│   ├── config.sql     # Andmebaasi loomine
-│   ├── schema.sql     # Tabelite loomine
-│   └── sample_data.sql # Näidisandmed
-├── backend/           # Backend API
-│   ├── config.php    # Andmebaasi ühendus
-│   └── api.php       # RESTful API lõpp-punktid
-├── css/              # Stiilid
-├── js/               # Frontend loogika
-└── index.html        # Peamine rakenduse leht
-```
-
 ## FUNKTSIONAALSED NÕUDED
 
 ### Koolide haldus
 • Süsteemis saab lisada mitmeid koole
 • Igal koolil on unikaalne nimi ja asukoht
+• **Tabel: Departments** (Osakonnad/Koolid)
+  - Salvestab kooli/osakonna nime (department_name) - peab olema unikaalne
+  - Salvestab asukoha/hoone info (building)
+  - Salvestab eelarve (budget) - rahaliseks planeerimiseks
+  - Iga kirje identifitseeritakse automaatse numbriga (department_id)
 
 ### Rühmade haldus
 • Igal koolil on üks või mitu rühma (nt 10A, 11B)
 • Rühmad kuuluvad alati kindla kooli alla
+• **Märkus:** Praeguses andmebaasis on rühmad implementeeritud läbi Courses tabeli, kus semester ja year väljad määravad õppeperioodi
 
 ### Õpilaste haldus
 • Õpilased kuuluvad alati ühte rühma
 • Õpilase kohta salvestatakse eesnimi ja perenimi
 • Sama nimega õpilasi võib esineda mitmes rühmas
 • Õpilastel on ka esindajad
+• **Tabel: Students** (Õpilased)
+  - Salvestab õpilase nime (first_name, last_name)
+  - Salvestab kontaktandmed (email, phone)
+  - Salvestab sünnikuupäeva (date_of_birth)
+  - Salvestab õppeaasta alguse (enrollment_year) - mis aastal alustas
+  - Salvestab eriala/põhiosakonna (major_department_id) - viitab Departments tabelile
+  - Salvestab keskmise hinde (gpa) - Grade Point Average skaalal 0.00 kuni 5.00
+  - Iga õpilane identifitseeritakse unikaalse numbriga (student_id)
 
 ### Õpetajate haldus
 • Õpetajad on seotud ühe kindla kooliga
@@ -49,20 +36,54 @@ college_database/
 • Õpetaja võib õpetada mitmele rühmale ja mitut ainet
 • Kindlasti peavad süsteemis olema ka õpetajate palgaandmed ning teave palkade väljamaksete kohta
 • Õpetajate kohta tuleb sisestada ka kontaktandmed: arvestada tuleb, et ühel õpetajal võib olla mitu kontaktelefoni või aadressi
+• **Tabel: Instructors** (Õpetajad/Õppejõud)
+  - Salvestab õpetaja nime (first_name, last_name)
+  - Salvestab kontaktandmed (email - unikaalne, phone)
+  - Salvestab osakonna (department_id) - KOHUSTUSLIK, õpetaja töötab ainult ühes osakonnas
+  - Salvestab palga info (salary) - kuu- või aastapalk detsimaalarvuna
+  - Salvestab töölevõtmise kuupäeva (hire_date)
+  - Iga õpetaja identifitseeritakse unikaalse numbriga (instructor_id)
+  - Õpetaja saab õpetada mitut kursust (üks-mitmele seos Courses tabeliga)
+  - Õpetaja saab olla ainult ühe osakonna juhataja (DepartmentHeads tabel)
 
 ### Tundide haldus
 • Õppetunnid seotakse õpetaja ja rühmaga
 • Tunni kohta säilitatakse aine nimi ja kuupäev
 • Iga tund kuulub konkreetsele rühmale
+• **Tabel: Courses** (Kursused/Õppeained)
+  - Salvestab kursuse koodi (course_code) - unikaalne tunnuskood (nt CS101, MATH200)
+  - Salvestab kursuse nime (course_name) - aine täisnimi
+  - Salvestab osakonna (department_id) - millisesse osakonda kursus kuulub
+  - Salvestab õpetaja (instructor_id) - kes kursust õpetab (üks kursus = üks õpetaja)
+  - Salvestab krediidipunktid (credits) - vaikimisi 3, määrab kursuse mahu
+  - Salvestab semestri (semester) - milline õppeperiood (nt "Fall 2024", "Spring 2025")
+  - Salvestab aasta (year) - õppeaasta number
+  - Salvestab ruumi (room_number) - kus tunnid toimuvad (nt "A-101", "Lab 3")
+  - Salvestab ajakava (schedule) - millal nädalas tunnid on (nt "Mon/Wed 10:00-11:30")
+  - Iga kursus identifitseeritakse unikaalse numbriga (course_id)
 
 ### Hinnete haldus
 • Iga hinne on seotud konkreetse õpilase ja tunniga
 • Hindeks lubatud väärtused on 1 kuni 5 (või muu skaalaga vastavalt vajadusele)
 • Hinnetele võib lisada vabatekstilise kommentaari (nt „puudus", „hilines")
+• **Tabel: Enrollments** (Registreerimised/Hinded)
+  - Seob õpilase kursusega - mitu-mitmele seos (many-to-many)
+  - Salvestab registreerumise kuupäeva (enrollment_date)
+  - Salvestab hinde (grade) - lõplik hinne (nt "A", "B", "5", "4")
+  - Salvestab staatuse (status) - "Active", "Completed", "Dropped", "Failed"
+  - Iga registreerimine on unikaalne (enrollment_id)
+  - OLULINE: Üks õpilane saab samale kursusele registreeruda ainult üks kord
+  - Võimaldab õpilasel olla mitmel kursusel ja kursusel olla mitu õpilast
 
 ### Klassid
 • Ruumid
 • Muu info, näiteks töömehele, kel tarvis remonti teha
+• **Tabel: DepartmentHeads** (Osakonnajuhatajad/Juhtide määramine)
+  - Seob osakonna ja õpetaja - üks-ühele seos
+  - Iga osakonnal saab olla ainult üks juhataja korraga
+  - Üks õpetaja saab juhtida ainult ühte osakonda
+  - Salvestab alguskuupäeva (start_date) - millal juhataja ametisse asus
+  - HOIATUS: Ainult praegune juhataja salvestatakse, ajalugu ei säilitata
 
 ## MITTEFUNKTSIONAALSED NÕUDED
 
@@ -94,194 +115,121 @@ college_database/
 ### Kasutaja C (õpilane või lapsevanem)
 • Soovib näha enda (või lapse) viimase kuu hinnete kokkuvõtet
 
-## ANDMEBAASI STRUKTUUR
+## ANDMEBAASI TABELITE ÜLEVAADE
 
-### Tabelid ja Seosed
+Süsteem kasutab 6 põhitabelit:
 
-1. **Departments (Osakonnad)** - Koolide/osakondade info
-   - PRIMARY KEY: department_id
-   - Väljad: department_name, building, budget
+### 1. Departments (Osakonnad/Koolid)
+**Eesmärk:** Salvestab koolide/osakondade põhiinfo
+**Primaarvõti:** department_id (INT, AUTO_INCREMENT)
+**Väljad:**
+• department_name (VARCHAR 100) - UNIKAALNE, KOHUSTUSLIK - osakonna nimi
+• building (VARCHAR 100) - hoone asukoht
+• budget (DECIMAL 12,2) - eelarve rahaliseks planeerimiseks
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
 
-2. **Instructors (Õpetajad)** - Õpetajate andmed
-   - PRIMARY KEY: instructor_id
-   - FOREIGN KEY: department_id → Departments
-   - Väljad: first_name, last_name, email, phone, salary, hire_date
+### 2. Instructors (Õpetajad)
+**Eesmärk:** Salvestab õpetajate andmed ja osakonna kuuluvus
+**Primaarvõti:** instructor_id (INT, AUTO_INCREMENT)
+**Välisvõtmed:** department_id → Departments
+**Väljad:**
+• first_name, last_name (VARCHAR 50) - KOHUSTUSLIK - nimi
+• email (VARCHAR 100) - UNIKAALNE, KOHUSTUSLIK - e-post
+• phone (VARCHAR 20) - telefoninumber
+• department_id (INT) - KOHUSTUSLIK - kuhu osakonda kuulub
+• salary (DECIMAL 10,2) - palk
+• hire_date (DATE) - töölevõtmise kuupäev
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
+**Reeglid:**
+• Õpetaja PEAB kuuluma ühte osakonda (department_id ei tohi olla NULL)
+• Õpetaja võib õpetada mitut kursust
 
-3. **DepartmentHeads (Osakonnajuhatajad)** - Juhtide määramine
-   - PRIMARY KEY: department_id
-   - FOREIGN KEY: instructor_id → Instructors
-   - Igal osakonnal saab olla ainult üks juhataja
+### 3. DepartmentHeads (Osakonnajuhatajad)
+**Eesmärk:** Määrab, kes on osakonna juhataja
+**Primaarvõti:** department_id (INT) - tagab et ühel osakonnal üks juhataja
+**Välisvõtmed:** 
+• department_id → Departments
+• instructor_id → Instructors (UNIKAALNE - õpetaja saab juhtida ainult ühte)
+**Väljad:**
+• instructor_id (INT) - UNIKAALNE, KOHUSTUSLIK - kes on juhataja
+• start_date (DATE) - KOHUSTUSLIK - millal sai juhatajaks
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
+**Reeglid:**
+• Iga osakond võib omada kõige rohkem ühte juhatajat
+• Üks õpetaja võib juhtida ainult ühte osakonda
+• Osakond võib eksisteerida ilma juhatajata
+• Ainult praegune juhataja salvestatakse (ajaloo ei säilitata!)
 
-4. **Courses (Kursused)** - Õppeained/kursused
-   - PRIMARY KEY: course_id
-   - FOREIGN KEY: department_id → Departments
-   - FOREIGN KEY: instructor_id → Instructors
-   - Väljad: course_code, course_name, credits, semester, year, room_number, schedule
+### 4. Courses (Kursused/Õppeained)
+**Eesmärk:** Salvestab kursuste/ainete info ja ajakava
+**Primaarvõti:** course_id (INT, AUTO_INCREMENT)
+**Välisvõtmed:**
+• department_id → Departments (KOHUSTUSLIK)
+• instructor_id → Instructors (õpetaja kes kursust õpetab)
+**Väljad:**
+• course_code (VARCHAR 20) - UNIKAALNE, KOHUSTUSLIK - kursuse kood (nt CS101)
+• course_name (VARCHAR 100) - KOHUSTUSLIK - kursuse nimi
+• department_id (INT) - KOHUSTUSLIK - millise osakonna kursus
+• instructor_id (INT) - milline õpetaja õpetab
+• credits (INT) - KOHUSTUSLIK, vaikimisi 3 - krediidipunktid
+• semester (VARCHAR 20) - semester (nt "Fall 2024", "Spring 2025")
+• year (INT) - õppeaasta
+• room_number (VARCHAR 20) - kus toimub (nt "A-101", "Lab 3")
+• schedule (VARCHAR 100) - millal toimub (nt "Mon/Wed 10:00-11:30")
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
+**Reeglid:**
+• Üks kursus kuulub ühte osakonda
+• Ühte kursust õpetab üks õpetaja
 
-5. **Students (Õpilased)** - Õpilaste info
-   - PRIMARY KEY: student_id
-   - FOREIGN KEY: major_department_id → Departments
-   - Väljad: first_name, last_name, email, phone, date_of_birth, enrollment_year, gpa
+### 5. Students (Õpilased)
+**Eesmärk:** Salvestab õpilaste põhiandmed
+**Primaarvõti:** student_id (INT, AUTO_INCREMENT)
+**Välisvõtmed:** major_department_id → Departments (eriala/põhiosakond)
+**Väljad:**
+• first_name, last_name (VARCHAR 50) - KOHUSTUSLIK - nimi
+• email (VARCHAR 100) - UNIKAALNE, KOHUSTUSLIK - e-post
+• phone (VARCHAR 20) - telefoninumber
+• date_of_birth (DATE) - sünnikuupäev
+• enrollment_year (INT) - mis aastal alustas
+• major_department_id (INT) - põhieriala osakond
+• gpa (DECIMAL 3,2) - keskmine hinne (0.00 kuni 5.00)
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
 
-6. **Enrollments (Registreerimised)** - Õpilaste kursustele registreerimine
-   - PRIMARY KEY: enrollment_id
-   - FOREIGN KEY: student_id → Students
-   - FOREIGN KEY: course_id → Courses
-   - Väljad: enrollment_date, grade, status
-   - UNIQUE (student_id, course_id) - üks õpilane saab kursusele registreerida ainult üks kord
+### 6. Enrollments (Kursusele registreerimised ja hinded)
+**Eesmärk:** Seob õpilased kursustega (mitu-mitmele seos) ja salvestab hinded
+**Primaarvõti:** enrollment_id (INT, AUTO_INCREMENT)
+**Välisvõtmed:**
+• student_id → Students (KOHUSTUSLIK)
+• course_id → Courses (KOHUSTUSLIK)
+**Väljad:**
+• student_id (INT) - KOHUSTUSLIK - milline õpilane
+• course_id (INT) - KOHUSTUSLIK - millisele kursusele
+• enrollment_date (DATE) - KOHUSTUSLIK - registreerumise kuupäev
+• grade (VARCHAR 2) - lõplik hinne (nt "A", "B", "5", "4")
+• status (VARCHAR 20) - vaikimisi "Active" - olek: "Active", "Completed", "Dropped", "Failed"
+• created_at, updated_at (TIMESTAMP) - automaatsed ajatemplid
+**Reeglid:**
+• UNIKAALNE(student_id, course_id) - õpilane saab kursusele registreeruda ainult üks kord
+• Õpilane võib olla mitmel kursusel
+• Kursusel võib olla mitu õpilast
 
-### Põhilised Seosed
+## ANDMEBAASI SEOSTE SKEEM
+
 ```
-Departments (1) ----< (M) Instructors
-     |                       |
-     | (1:1)                | (1)
-     |                       |
-     v                       v
-DepartmentHeads       Courses (M)
-                           |
-                           | (M:N)
-                           |
-                           v
-                    Enrollments ----< (M) Students
-```
+Departments (Osakonnad)
+    ├─→ 1:M → Instructors (Õpetajad)
+    │         └─→ 1:M → Courses (Kursused)
+    │                   └─→ M:N → Enrollments (Registreerimised)
+    │                               └─→ M:1 → Students (Õpilased)
+    │                                         └─→ M:1 → Departments (põhieriala)
+    ├─→ 1:1 → DepartmentHeads (Juhatajad)
+    │         └─→ 1:1 → Instructors
+    └─→ 1:M → Students (põhieriala järgi)
 
-## KIIRE KÄIVITAMINE
-
-### 1. Eeltingimused
-```bash
-# Kontrolli MySQL versiooni
-mysql --version
-
-# Kontrolli PHP versiooni (vajab 7.4+)
-php --version
-
-# Kontrolli PDO MySQL laiendust
-php -m | grep -i pdo
-```
-
-### 2. Andmebaasi Seadistamine
-```bash
-# Logi MySQL-i sisse
-mysql -u root -p
-
-# Käivita setup skriptid
-mysql> source database/config.sql;
-mysql> source database/schema.sql;
-mysql> source database/sample_data.sql;
-mysql> exit;
-```
-
-### 3. Backend Konfigureerimine
-Muuda `backend/config.php` failis andmebaasi volitusi:
-```php
-define('DB_HOST', 'localhost');
-define('DB_PORT', '3306');
-define('DB_NAME', 'college_db');
-define('DB_USER', 'sinu_kasutajanimi');
-define('DB_PASS', 'sinu_parool');
-```
-
-**TURVALISUSE MÄRKUS**: Ärge kasutage 'root' kasutajat! Looge piiratud õigustega kasutaja:
-```sql
-CREATE USER 'college_app'@'localhost' IDENTIFIED BY 'turvaline_parool';
-GRANT SELECT, INSERT, UPDATE, DELETE ON college_db.* TO 'college_app'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-### 4. Rakenduse Käivitamine
-```bash
-# Arenduseks (PHP sisseehitatud server)
-cd college_database
-php -S localhost:8000
-
-# Ava brauser: http://localhost:8000
-```
-
-## API LÕPP-PUNKTID
-
-Süsteem pakub RESTful API järgmiste lõpp-punktidega:
-
-### Osakonnad (Departments)
-- **GET** `/backend/api.php?request=departments` - Kõik osakonnad
-- **POST** `/backend/api.php?request=departments` - Uue osakonna loomine
-- **PUT** `/backend/api.php?request=departments&id={id}` - Osakonna uuendamine
-- **DELETE** `/backend/api.php?request=departments&id={id}` - Osakonna kustutamine
-
-### Õpetajad (Instructors)
-- **GET** `/backend/api.php?request=instructors` - Kõik õpetajad
-- **POST** `/backend/api.php?request=instructors` - Uue õpetaja lisamine
-- **PUT** `/backend/api.php?request=instructors&id={id}` - Õpetaja andmete uuendamine
-- **DELETE** `/backend/api.php?request=instructors&id={id}` - Õpetaja kustutamine
-
-### Õpilased (Students)
-- **GET** `/backend/api.php?request=students` - Kõik õpilased
-- **POST** `/backend/api.php?request=students` - Uue õpilase lisamine
-- **PUT** `/backend/api.php?request=students&id={id}` - Õpilase andmete uuendamine
-- **DELETE** `/backend/api.php?request=students&id={id}` - Õpilase kustutamine
-
-### Kursused (Courses)
-- **GET** `/backend/api.php?request=courses` - Kõik kursused
-- **POST** `/backend/api.php?request=courses` - Uue kursuse loomine
-- **PUT** `/backend/api.php?request=courses&id={id}` - Kursuse uuendamine
-- **DELETE** `/backend/api.php?request=courses&id={id}` - Kursuse kustutamine
-
-### Registreerimised (Enrollments)
-- **GET** `/backend/api.php?request=enrollments` - Kõik registreerimised
-- **POST** `/backend/api.php?request=enrollments` - Uue registreerimise lisamine
-- **PUT** `/backend/api.php?request=enrollments&id={id}` - Registreerimise uuendamine
-- **DELETE** `/backend/api.php?request=enrollments&id={id}` - Registreerimise kustutamine
-
-### Osakonnajuhatajad (Department Heads)
-- **GET** `/backend/api.php?request=department-heads` - Kõik osakonnajuhatajad
-- **POST** `/backend/api.php?request=department-heads` - Uue juhataja määramine
-- **PUT** `/backend/api.php?request=department-heads&id={id}` - Juhataja vahetamine
-- **DELETE** `/backend/api.php?request=department-heads&id={id}` - Juhataja eemaldamine
-
-## KASULIKUD SQL PÄRINGUD
-
-### Õpilaste hinnete kokkuvõte
-```sql
-SELECT s.first_name, s.last_name, c.course_name, e.grade
-FROM Students s
-JOIN Enrollments e ON s.student_id = e.student_id
-JOIN Courses c ON e.course_id = c.course_id
-WHERE s.student_id = ?
-ORDER BY e.enrollment_date DESC;
-```
-
-### Õpetaja kursused
-```sql
-SELECT c.course_name, c.course_code, c.semester, c.year, 
-       COUNT(e.enrollment_id) as enrolled_students
-FROM Courses c
-LEFT JOIN Enrollments e ON c.course_id = e.course_id
-WHERE c.instructor_id = ?
-GROUP BY c.course_id;
-```
-
-### Osakonna statistika
-```sql
-SELECT d.department_name,
-       COUNT(DISTINCT i.instructor_id) as instructor_count,
-       COUNT(DISTINCT c.course_id) as course_count,
-       COUNT(DISTINCT s.student_id) as student_count
-FROM Departments d
-LEFT JOIN Instructors i ON d.department_id = i.department_id
-LEFT JOIN Courses c ON d.department_id = c.department_id
-LEFT JOIN Students s ON d.department_id = s.major_department_id
-WHERE d.department_id = ?
-GROUP BY d.department_id;
-```
-
-### Kursuste mahutavus
-```sql
-SELECT c.course_name, c.room_number, c.schedule,
-       COUNT(e.enrollment_id) as enrolled_count
-FROM Courses c
-LEFT JOIN Enrollments e ON c.course_id = e.course_id
-WHERE c.semester = ? AND c.year = ?
-GROUP BY c.course_id
-ORDER BY enrolled_count DESC;
+Selgitus:
+• 1:M = üks-mitmele (nt üks osakond, mitu õpetajat)
+• 1:1 = üks-ühele (nt üks osakond, üks juhataja)
+• M:N = mitu-mitmele (nt õpilased ja kursused läbi Enrollments tabeli)
 ```
 
 ## LAIENDUSVÕIMALUSED
@@ -292,12 +240,59 @@ Võimalused, millest ei olnud veel aega kokku leppida:
 • Puudumiste haldus
 • Tunniplaan
 • Inventar
-• Ajalooliste andmete säilitamine (nt varasemad osakonnajuhatajad)
-• Ruumide detailne haldus (mahutavus, varustus)
-• Õpilaste fotod ja dokumendid
-• Õpetajate kvalifikatsioonide jälgimine
-• Automatiseeritud hindearvutused (GPA)
-• E-posti teavitused
+
+## KASULIKUD SQL PÄRINGUTE NÄITED
+
+### Osakonna kõigi õpetajate vaatamine
+```sql
+SELECT i.first_name, i.last_name, i.email, i.salary
+FROM Instructors i
+JOIN Departments d ON i.department_id = d.department_id
+WHERE d.department_name = 'Computer Science';
+```
+
+### Õpilase kõigi kursuste ja hinnete vaatamine
+```sql
+SELECT c.course_name, c.course_code, e.grade, e.status, 
+       i.first_name AS teacher_first, i.last_name AS teacher_last
+FROM Enrollments e
+JOIN Courses c ON e.course_id = c.course_id
+JOIN Students s ON e.student_id = s.student_id
+JOIN Instructors i ON c.instructor_id = i.instructor_id
+WHERE s.email = 'student@example.com'
+ORDER BY e.enrollment_date DESC;
+```
+
+### Kursuse kõigi õpilaste vaatamine
+```sql
+SELECT s.first_name, s.last_name, s.email, e.grade, e.status
+FROM Enrollments e
+JOIN Students s ON e.student_id = s.student_id
+JOIN Courses c ON e.course_id = c.course_id
+WHERE c.course_code = 'CS101'
+ORDER BY s.last_name, s.first_name;
+```
+
+### Osakonna juhataja leidmine
+```sql
+SELECT d.department_name, i.first_name, i.last_name, dh.start_date
+FROM DepartmentHeads dh
+JOIN Departments d ON dh.department_id = d.department_id
+JOIN Instructors i ON dh.instructor_id = i.instructor_id
+WHERE d.department_name = 'Mathematics';
+```
+
+### Õpetaja kõigi kursuste vaatamine
+```sql
+SELECT c.course_name, c.course_code, c.semester, c.year,
+       COUNT(e.enrollment_id) AS enrolled_students
+FROM Courses c
+LEFT JOIN Enrollments e ON c.course_id = e.course_id
+JOIN Instructors i ON c.instructor_id = i.instructor_id
+WHERE i.email = 'teacher@example.com'
+GROUP BY c.course_id
+ORDER BY c.year DESC, c.semester;
+```
 
 ## KASUTAJATE LOOMINE (näidis)
 
@@ -319,138 +314,3 @@ GRANT school_admin TO yllar@localhost;
 -- Vaikimisi rolli seadmine
 SET DEFAULT ROLE school_admin TO yllar@localhost;
 ```
-
-## VEAOTSING (TROUBLESHOOTING)
-
-### Andmebaasi ühendus ebaõnnestub
-- Kontrolli, kas MySQL töötab: `sudo service mysql status`
-- Kontrolli volitusi `backend/config.php` failis
-- Veendu, et PDO MySQL laiend on paigaldatud: `php -m | grep pdo_mysql`
-
-### 500 Internal Server Error
-- Kontrolli PHP vealogie
-- Veendu, et failide õigused on korrektsed
-- Kontrolli PHP versiooni ühilduvust (vajab 7.4+)
-
-### API ei vasta
-- Kontrolli `.htaccess` faili (kui kasutad Apache'd)
-- Veendu, et API lõpp-punktide URL-id on õiged `js/app.js` failis
-- Kontrolli CORS seadeid, kui kasutad erinevaid domeene
-
-### Märgistiku (Character Encoding) probleemid
-- Veendu, et andmebaas kasutab UTF-8: `ALTER DATABASE college_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`
-- Lisa PHP faili algusesse: `header('Content-Type: text/html; charset=utf-8');`
-
-## NÄIDISANDMED
-
-Pärast `sample_data.sql` käivitamist on andmebaasis:
-- 5 osakonda (CS, Math, Physics, English, Business)
-- 8 õpetajat (määratud osakondadesse)
-- 8 õpilast (erinevate erialadega)
-- 9 kursust (erinevates osakondades)
-- 16 registreerimist (õpilased kursustele)
-- 5 osakonnajuhatajat
-
-## TURVALISUSE MÄRKUSED
-
-### Tootmiskeskkonna jaoks:
-1. ✅ **Ära kasuta 'root' kasutajat** - Loo piiratud õigustega kasutaja
-2. ✅ **Kasuta tugevaid paroole** - Minimaalselt 12 tähemärki, segatud sümbolid
-3. ✅ **Luba HTTPS** - Krüpti kõik andmeedastused
-4. ✅ **Piirange failide õigused** - 644 failidele, 755 kaustadele
-5. ✅ **Vältida SQL injection** - Kasutatakse prepared statements
-6. ✅ **Lisa autentimine** - Rakenda kasutajate sisselogimine
-7. ✅ **Varundamine** - Seadista regulaarsed andmebaasi varukoopiad
-8. ✅ **Logi jälgimine** - Jälgi ebatavalisi tegevusi
-
-### Soovituslikud turva täiustused:
-```sql
--- Piira sisselogimise katseid
-CREATE TABLE login_attempts (
-    attempt_id INT PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(100),
-    ip_address VARCHAR(45),
-    attempt_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
--- Sessioonide haldus
-CREATE TABLE user_sessions (
-    session_id VARCHAR(255) PRIMARY KEY,
-    user_id INT,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    expires_at TIMESTAMP,
-    ip_address VARCHAR(45)
-);
-```
-
-## JÕUDLUSE OPTIMEERIMINE
-
-### Indeksite seadistamine
-Süsteemis on juba põhilised indeksid, kuid suurte andmehulkade puhul lisa:
-```sql
--- Kiired otsingud nime järgi
-CREATE INDEX idx_student_name ON Students(last_name, first_name);
-CREATE INDEX idx_instructor_name ON Instructors(last_name, first_name);
-
--- Kiired filtreerimised semestri/aasta järgi
-CREATE INDEX idx_course_semester ON Courses(semester, year);
-
--- Kiired registreerimiste päringud
-CREATE INDEX idx_enrollment_status ON Enrollments(status, enrollment_date);
-```
-
-### Päringu optimeerimine
-- Kasuta `EXPLAIN` käsku päringute analüüsimiseks
-- Väldi `SELECT *` - vali ainult vajalikud väljad
-- Kasuta `LIMIT` suurte tulemuste korral
-- Rakenda andmete vahemällu salvestamist (caching)
-
-## KASUTAJALIIDES
-
-### Funktsioonid
-- ✅ Täielik CRUD (Create, Read, Update, Delete) kõigile entiteetidele
-- ✅ Kaasaegne, reageeriv UI gradient disainiga
-- ✅ Reaalajas andmete uuendamine
-- ✅ Vormi valideerimine
-- ✅ Seoste haldamine
-- ✅ Modaalsed vormid
-- ✅ Tühjad olekud (empty states)
-- ✅ Sujuvad animatsioonid
-
-### Navigatsioon
-Dashboard'il on juurdepääs kõigile moodulitele:
-- Osakonnad (Departments)
-- Õpetajad (Instructors)
-- Õpilased (Students)
-- Kursused (Courses)
-- Registreerimised (Enrollments)
-- Osakonnajuhatajad (Department Heads)
-
-## LISARESSURSID
-
-- `readme.md` - Põhjalik ingliskeelne dokumentatsioon
-- `DATABASE_SCHEMA.md` - Üksikasjalik andmebaasi skeemi dokumentatsioon
-- `SETUP_GUIDE.md` - Samm-sammult paigaldusjuhend
-- `database/schema.sql` - Andmebaasi struktuur SQL-is
-- `backend/api.php` - API lõpp-punktide lähtekood
-
-## PROJEKTI EESMÄRGID
-
-See projekt on loodud:
-1. **Õppeeesmärkidel** - Näitamaks relatsioonilise andmebaasi disaini
-2. **Praktilistel eesmärkidel** - Pakkudes töötavat haldussüsteemi
-3. **Demonstratsiooniks** - Näitamaks API ja frontend integreerimist
-4. **Alusena** - Võimaldamaks laiendamist ja kohandamist
-
-## PANUSTAMINE
-
-Tere tulemast panustama! Saada probleemid (issues) ja täiustamise soovid (enhancement requests).
-
-## LITSENTS
-
-See projekt on loodud hariduslikel eesmärkidel.
-
----
-**Viimati uuendatud**: 2025-11-06
-**Versioon**: 1.1
-**Autor**: lokr3m
