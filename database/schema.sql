@@ -127,8 +127,13 @@ CREATE TABLE Instructors (
 --
 -- Historical Data / Ajaloolised Andmed:
 --   ⚠️ IMPORTANT / TÄHTIS:
---   This table tracks ONLY the CURRENT department head. There is NO historical record.
---   See tabel jälgib AINULT PRAEGUST osakonnajuhatajat. Ajaloolist kirjet EI OLE.
+--   This table tracks ONLY the CURRENT department head. Records of PREVIOUS heads are NOT preserved.
+--   See tabel jälgib AINULT PRAEGUST osakonnajuhatajat. Kirjeid VARASEMATEST juhatajatatest EI SÄILITATA.
+--   
+--   The start_date field tells when the current head's tenure began, but when a new head
+--   is assigned, information about the previous head is lost.
+--   start_date väli näitab, millal praeguse juhataja ametiaeg algas, kuid kui määratakse
+--   uus juhataja, läheb informatsioon varasema juhataja kohta kaduma.
 --   
 --   When a new head is assigned:
 --   Kui määratakse uus juhataja:
@@ -203,7 +208,7 @@ CREATE TABLE DepartmentHeads (
 --   These four fields work together to define WHEN and WHERE a course is offered:
 --   Need neli välja töötavad koos, et määratleda, MILLAL ja KUS kursust pakutakse:
 --
---   📅 semester (VARCHAR(20)) - ACADEMIC TERM / AKADEEMILINE PERIOOD
+--   [SEMESTER] semester (VARCHAR(20)) - ACADEMIC TERM / AKADEEMILINE PERIOOD
 --       Purpose: Indicates which academic term/semester the course is offered
 --       Eesmärk: Näitab, millises akadeemilises perioodis/semestris kursust pakutakse
 --       
@@ -217,7 +222,7 @@ CREATE TABLE DepartmentHeads (
 --       This answers the question: "WHICH academic period is this course offered?"
 --       See vastab küsimusele: "MILLISES akadeemilises perioodis seda kursust pakutakse?"
 --
---   📆 year (INT) - ACADEMIC YEAR / ÕPPEAASTA
+--   [YEAR] year (INT) - ACADEMIC YEAR / ÕPPEAASTA
 --       Purpose: The calendar year for the course offering
 --       Eesmärk: Kalendriaasta kursuse pakkumisele
 --       
@@ -229,7 +234,7 @@ CREATE TABLE DepartmentHeads (
 --       Koos semestriga määrab see unikaalselt kursuse pakkumise perioodi.
 --       Näiteks: "Sügis 2024" tähendab sügisemestrit aastal 2024.
 --
---   🏫 room_number (VARCHAR(20)) - CLASSROOM LOCATION / KLASSIRUUMI ASUKOHT
+--   [ROOM] room_number (VARCHAR(20)) - CLASSROOM LOCATION / KLASSIRUUMI ASUKOHT
 --       Purpose: Physical location where the course lectures/classes are held
 --       Eesmärk: Füüsiline asukoht, kus kursuse loengud/tunnid toimuvad
 --       
@@ -251,7 +256,7 @@ CREATE TABLE DepartmentHeads (
 --       võib olla eraldi "Ruumid" tabel üksikasjaliku infoga iga klassiruumi kohta
 --       (mahutavus, varustus, hoone asukoht jne).
 --
---   ⏰ schedule (VARCHAR(100)) - WEEKLY MEETING TIMES / NÄDALASED KOHTUMISE AJAD
+--   [SCHEDULE] schedule (VARCHAR(100)) - WEEKLY MEETING TIMES / NÄDALASED KOHTUMISE AJAD
 --       Purpose: When during the week the course meets (days and times)
 --       Eesmärk: Millal nädala jooksul kursus toimub (päevad ja kellaajad)
 --       

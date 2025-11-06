@@ -135,8 +135,11 @@ See on ühendav/siduv tabel, mis loob 1:1 seose Osakondade ja Õpetajate vahel j
 **Historical Data / Ajaloolised Andmed**:
 
 ⚠️ **IMPORTANT / TÄHTIS**:
-This table tracks **ONLY the CURRENT department head**. There is **NO historical record**.
-See tabel jälgib **AINULT PRAEGUST osakonnajuhatajat**. Ajaloolist kirjet **EI OLE**.
+This table tracks **ONLY the CURRENT department head**. Records of **PREVIOUS heads are NOT preserved**.
+See tabel jälgib **AINULT PRAEGUST osakonnajuhatajat**. Kirjeid **VARASEMATEST juhatajatatest EI SÄILITATA**.
+
+The start_date field tells when the current head's tenure began, but when a new head is assigned, information about the previous head is lost.
+start_date väli näitab, millal praeguse juhataja ametiaeg algas, kuid kui määratakse uus juhataja, läheb informatsioon varasema juhataja kohta kaduma.
 
 **When a new head is assigned / Kui määratakse uus juhataja**:
 1. The old record is UPDATED (start_date changes) OR / Vana kirje UUENDATAKSE (start_date muutub) VÕI
@@ -191,7 +194,7 @@ Salvestab kursuste pakkumisi ja ülesandeid
 These four fields work together to define **WHEN** and **WHERE** a course is offered:
 Need neli välja töötavad koos, et määratleda, **MILLAL** ja **KUS** kursust pakutakse:
 
-#### 📅 **semester** - ACADEMIC TERM / AKADEEMILINE PERIOOD
+#### **[SEMESTER] semester** - ACADEMIC TERM / AKADEEMILINE PERIOOD
 **Purpose**: Indicates which academic term/semester the course is offered
 **Eesmärk**: Näitab, millises akadeemilises perioodis/semestris kursust pakutakse
 
@@ -205,7 +208,7 @@ Need neli välja töötavad koos, et määratleda, **MILLAL** ja **KUS** kursust
 **This answers**: "WHICH academic period is this course offered?"
 **See vastab**: "MILLISES akadeemilises perioodis seda kursust pakutakse?"
 
-#### 📆 **year** - ACADEMIC YEAR / ÕPPEAASTA
+#### **[YEAR] year** - ACADEMIC YEAR / ÕPPEAASTA
 **Purpose**: The calendar year for the course offering
 **Eesmärk**: Kalendriaasta kursuse pakkumisele
 
@@ -215,7 +218,7 @@ Combined with semester, this uniquely identifies the course offering period. For
 
 Koos semestriga määrab see unikaalselt kursuse pakkumise perioodi. Näiteks: "Sügis 2024" tähendab sügisemestrit aastal 2024.
 
-#### 🏫 **room_number** - CLASSROOM LOCATION / KLASSIRUUMI ASUKOHT
+#### **[ROOM] room_number** - CLASSROOM LOCATION / KLASSIRUUMI ASUKOHT
 **Purpose**: Physical location where the course lectures/classes are held
 **Eesmärk**: Füüsiline asukoht, kus kursuse loengud/tunnid toimuvad
 
@@ -233,7 +236,7 @@ Koos semestriga määrab see unikaalselt kursuse pakkumise perioodi. Näiteks: "
 
 **Märkus**: See on lihtne tekstiväli paindlikkuse tagamiseks. Keerukamas süsteemis võib olla eraldi "Ruumid" tabel üksikasjaliku infoga iga klassiruumi kohta (mahutavus, varustus, hoone asukoht jne).
 
-#### ⏰ **schedule** - WEEKLY MEETING TIMES / NÄDALASED KOHTUMISE AJAD
+#### **[SCHEDULE] schedule** - WEEKLY MEETING TIMES / NÄDALASED KOHTUMISE AJAD
 **Purpose**: When during the week the course meets (days and times)
 **Eesmärk**: Millal nädala jooksul kursus toimub (päevad ja kellaajad)
 
