@@ -40,32 +40,146 @@ INSERT INTO Courses (course_code, course_name, department_id, instructor_id, cre
 ('BUS101', 'Introduction to Business', 5, 7, 3, 'Fall', 2024, 'BUS-201', 'Mon/Wed 10:00-11:30'),
 ('BUS201', 'Marketing Fundamentals', 5, 8, 3, 'Fall', 2024, 'BUS-202', 'Tue/Thu 14:00-15:30');
 
--- Insert Students
-INSERT INTO Students (first_name, last_name, email, phone, date_of_birth, enrollment_year, major_department_id, gpa) VALUES
-('Alice', 'Wilson', 'alice.wilson@student.college.edu', '555-1001', '2003-05-15', 2023, 1, 3.85),
-('Bob', 'Taylor', 'bob.taylor@student.college.edu', '555-1002', '2002-11-22', 2022, 1, 3.45),
-('Charlie', 'Moore', 'charlie.moore@student.college.edu', '555-1003', '2003-08-10', 2023, 2, 3.72),
-('Diana', 'Thomas', 'diana.thomas@student.college.edu', '555-1004', '2004-02-28', 2024, 3, 3.90),
-('Edward', 'Jackson', 'edward.jackson@student.college.edu', '555-1005', '2003-07-19', 2023, 5, 3.55),
-('Fiona', 'White', 'fiona.white@student.college.edu', '555-1006', '2002-12-05', 2022, 4, 3.68),
-('George', 'Harris', 'george.harris@student.college.edu', '555-1007', '2003-09-14', 2023, 1, 3.25),
-('Hannah', 'Martin', 'hannah.martin@student.college.edu', '555-1008', '2004-04-30', 2024, 2, 3.95);
+-- Insert Mandatory Courses for each department and academic year
+-- Computer Science mandatory courses
+INSERT INTO MandatoryCourses (department_id, course_id, academic_year) VALUES
+(1, 1, 1), -- CS101 is mandatory for year 1
+(1, 2, 2); -- CS201 is mandatory for year 2
 
--- Insert Enrollments
-INSERT INTO Enrollments (student_id, course_id, enrollment_date, grade, status) VALUES
-(1, 1, '2024-08-20', 'A', 'Active'),
-(1, 2, '2024-08-20', 'A-', 'Active'),
-(1, 4, '2024-08-20', NULL, 'Active'),
-(2, 1, '2024-08-20', 'B+', 'Active'),
-(2, 3, '2024-08-20', NULL, 'Active'),
-(3, 4, '2024-08-20', 'A', 'Active'),
-(3, 5, '2024-08-20', 'A-', 'Active'),
-(4, 6, '2024-08-20', 'A', 'Active'),
-(4, 7, '2024-08-20', NULL, 'Active'),
-(5, 8, '2024-08-20', 'B', 'Active'),
-(5, 9, '2024-08-20', 'B+', 'Active'),
-(6, 7, '2024-08-20', 'A-', 'Active'),
-(7, 1, '2024-08-20', 'C+', 'Active'),
-(7, 2, '2024-08-20', NULL, 'Active'),
-(8, 4, '2024-08-20', 'A', 'Active'),
-(8, 5, '2024-08-20', NULL, 'Active');
+-- Mathematics mandatory courses
+INSERT INTO MandatoryCourses (department_id, course_id, academic_year) VALUES
+(2, 4, 1), -- MATH101 is mandatory for year 1
+(2, 5, 2); -- MATH201 is mandatory for year 2
+
+-- Physics mandatory courses
+INSERT INTO MandatoryCourses (department_id, course_id, academic_year) VALUES
+(3, 6, 1); -- PHY101 is mandatory for year 1
+
+-- English mandatory courses
+INSERT INTO MandatoryCourses (department_id, course_id, academic_year) VALUES
+(4, 7, 1); -- ENG101 is mandatory for year 1
+
+-- Business Administration mandatory courses
+INSERT INTO MandatoryCourses (department_id, course_id, academic_year) VALUES
+(5, 8, 1), -- BUS101 is mandatory for year 1
+(5, 9, 2); -- BUS201 is mandatory for year 2
+
+-- Insert Students (with academic_year field)
+-- Note: The trigger will automatically enroll them in mandatory courses
+INSERT INTO Students (first_name, last_name, email, phone, date_of_birth, enrollment_year, academic_year, major_department_id, gpa) VALUES
+('Alice', 'Wilson', 'alice.wilson@student.college.edu', '555-1001', '2003-05-15', 2023, 1, 1, 3.85),
+('Bob', 'Taylor', 'bob.taylor@student.college.edu', '555-1002', '2002-11-22', 2022, 2, 1, 3.45),
+('Charlie', 'Moore', 'charlie.moore@student.college.edu', '555-1003', '2003-08-10', 2023, 1, 2, 3.72),
+('Diana', 'Thomas', 'diana.thomas@student.college.edu', '555-1004', '2004-02-28', 2024, 1, 3, 3.90),
+('Edward', 'Jackson', 'edward.jackson@student.college.edu', '555-1005', '2003-07-19', 2023, 1, 5, 3.55),
+('Fiona', 'White', 'fiona.white@student.college.edu', '555-1006', '2002-12-05', 2022, 1, 4, 3.68),
+('George', 'Harris', 'george.harris@student.college.edu', '555-1007', '2003-09-14', 2023, 1, 1, 3.25),
+('Hannah', 'Martin', 'hannah.martin@student.college.edu', '555-1008', '2004-04-30', 2024, 2, 2, 3.95);
+
+-- Insert additional Enrollments (non-mandatory courses)
+-- Note: Mandatory courses are already enrolled via the trigger
+INSERT INTO Enrollments (student_id, course_id, enrollment_date, is_mandatory, status) VALUES
+-- Alice (CS student, year 1) - already has CS101 from trigger, adding MATH101
+(1, 4, '2024-08-20', FALSE, 'Active'),
+-- Bob (CS student, year 2) - already has CS201 from trigger, adding CS301
+(2, 3, '2024-08-20', FALSE, 'Active'),
+-- Charlie (Math student, year 1) - already has MATH101 from trigger, adding MATH201
+(3, 5, '2024-08-20', FALSE, 'Active'),
+-- Diana (Physics student, year 1) - already has PHY101 from trigger, adding ENG101
+(4, 7, '2024-08-20', FALSE, 'Active'),
+-- Fiona (English student, year 1) - already has ENG101 from trigger
+-- Edward and George already have their mandatory courses from trigger
+-- Hannah (Math student, year 2) - already has MATH201 from trigger, adding MATH101
+(8, 4, '2024-08-20', FALSE, 'Active');
+
+-- Insert Grades (replacing the old grade field in Enrollments)
+INSERT INTO Grades (enrollment_id, grade_value, grade_type, grade_date, graded_by, is_current) VALUES
+-- Alice's grades
+(1, '5', 'Final', '2024-11-15', 1, TRUE),     -- CS101 (mandatory)
+(2, '4', 'Final', '2024-11-15', 3, TRUE),     -- MATH101
+-- Bob's grades
+(3, '4', 'Final', '2024-11-15', 2, TRUE),     -- CS201 (mandatory)
+(4, '3', 'Midterm', '2024-10-15', 1, TRUE),   -- CS301
+-- Charlie's grades
+(5, '5', 'Final', '2024-11-15', 3, TRUE),     -- MATH101 (mandatory)
+(6, '5', 'Final', '2024-11-15', 4, TRUE),     -- MATH201
+-- Diana's grades
+(7, '5', 'Final', '2024-11-15', 5, TRUE),     -- PHY101 (mandatory)
+(8, '4', 'Midterm', '2024-10-15', 6, TRUE),   -- ENG101
+-- Edward's grades
+(9, '4', 'Final', '2024-11-15', 7, TRUE),     -- BUS101 (mandatory)
+-- Fiona's grades
+(10, '4', 'Final', '2024-11-15', 6, TRUE),    -- ENG101 (mandatory)
+-- George's grades
+(11, '3', 'Final', '2024-11-15', 1, TRUE),    -- CS101 (mandatory)
+-- Hannah's grades
+(12, '5', 'Final', '2024-11-15', 4, TRUE),    -- MATH201 (mandatory)
+(13, '5', 'Midterm', '2024-10-15', 3, TRUE);  -- MATH101
+
+-- Insert Grade History (examples of grade corrections)
+INSERT INTO GradeHistory (grade_id, old_grade_value, new_grade_value, changed_by, change_reason) VALUES
+(1, '4', '5', 1, 'Correction after final exam review'),
+(3, '3', '4', 2, 'Extra credit assignment completed');
+
+-- Insert Instructor Payments
+-- Payments should total approximately the instructor's annual salary (±10%)
+-- John Smith - salary 85000.00, payments should be 76500-93500
+INSERT INTO InstructorPayments (instructor_id, payment_date, amount, payment_type, fiscal_year) VALUES
+(1, '2024-01-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-02-29', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-03-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-04-30', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-05-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-06-30', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-07-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-08-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-09-30', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-10-31', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-11-30', 7083.33, 'Monthly Salary', 2024),
+(1, '2024-12-31', 7083.37, 'Monthly Salary', 2024);
+
+-- Emily Johnson - salary 78000.00, monthly = 6500.00
+INSERT INTO InstructorPayments (instructor_id, payment_date, amount, payment_type, fiscal_year) VALUES
+(2, '2024-01-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-02-29', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-03-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-04-30', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-05-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-06-30', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-07-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-08-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-09-30', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-10-31', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-11-30', 6500.00, 'Monthly Salary', 2024),
+(2, '2024-12-31', 6500.00, 'Monthly Salary', 2024);
+
+-- Michael Williams - salary 82000.00, adding some bonus payments
+INSERT INTO InstructorPayments (instructor_id, payment_date, amount, payment_type, fiscal_year) VALUES
+(3, '2024-01-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-02-29', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-03-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-04-30', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-05-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-06-30', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-07-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-08-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-09-30', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-10-31', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-11-30', 6833.33, 'Monthly Salary', 2024),
+(3, '2024-12-31', 6833.37, 'Monthly Salary', 2024),
+(3, '2024-12-20', 3000.00, 'Bonus', 2024);
+
+-- Sarah Brown - salary 75000.00
+INSERT INTO InstructorPayments (instructor_id, payment_date, amount, payment_type, fiscal_year) VALUES
+(4, '2024-01-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-02-29', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-03-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-04-30', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-05-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-06-30', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-07-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-08-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-09-30', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-10-31', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-11-30', 6250.00, 'Monthly Salary', 2024),
+(4, '2024-12-31', 6250.00, 'Monthly Salary', 2024);
