@@ -15,7 +15,11 @@
 -- Need väljad haldab MySQL automaatselt ja jälgivad, millal kirjed loodi ja viimati muudeti.
 
 -- Drop tables if they exist (in reverse order of dependencies)
+DROP TABLE IF EXISTS GradeHistory;
+DROP TABLE IF EXISTS Grades;
 DROP TABLE IF EXISTS Enrollments;
+DROP TABLE IF EXISTS InstructorPayments;
+DROP TABLE IF EXISTS MandatoryCourses;
 DROP TABLE IF EXISTS DepartmentHeads;
 DROP TABLE IF EXISTS Courses;
 DROP TABLE IF EXISTS Students;
@@ -349,6 +353,42 @@ CREATE TABLE Courses (
 );
 
 -- ============================================================================
+-- MANDATORY COURSES TABLE (Kohustuslikud Ained)
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Defines which courses are mandatory for each department in each academic year.
+--   Each department should have mandatory courses for students to complete.
+--   Määratleb, millised kursused on kohustuslikud igale osakonnale igal õppeaastal.
+--   Igal osakonnal peaksid olema kohustuslikud ained õpilaste läbimiseks.
+--
+-- Fields / Väljad:
+--   - mandatory_course_id: Unique identifier / Unikaalne identifikaator
+--   - department_id: Department this mandatory course applies to / Osakond, millele see kohustuslik kursus kehtib
+--   - course_id: The course that is mandatory / Kursus, mis on kohustuslik
+--   - academic_year: Academic year (1 or 2) / Õppeaasta (1 või 2)
+--   - created_at: Automatically set when record is created / Automaatselt seatud, kui kirje luuakse
+--   - updated_at: Automatically updated when record changes / Automaatselt uuendatud, kui kirje muutub
+--
+-- Business Rules / Ärireeglid:
+--   - A course can be mandatory for a specific department in a specific academic year
+--   - The same course cannot be mandatory for the same department and year twice
+--   - Kursus võib olla kohustuslik konkreetsele osakonnale konkreetsel õppeaastal
+--   - Sama kursust ei saa sama osakonna ja aasta jaoks kahel korral kohustuslikuks määrata
+-- ============================================================================
+CREATE TABLE MandatoryCourses (
+    mandatory_course_id INT PRIMARY KEY AUTO_INCREMENT,
+    department_id INT NOT NULL,
+    course_id INT NOT NULL,
+    academic_year INT NOT NULL CHECK (academic_year IN (1, 2)),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (department_id) REFERENCES Departments(department_id) ON DELETE CASCADE,
+    FOREIGN KEY (course_id) REFERENCES Courses(course_id) ON DELETE CASCADE,
+    UNIQUE KEY unique_mandatory_course (department_id, course_id, academic_year),
+    INDEX idx_department_year (department_id, academic_year)
+);
+
+-- ============================================================================
 -- STUDENTS TABLE (Õpilased / Üliõilased)
 -- ============================================================================
 -- Purpose / Eesmärk:
@@ -363,6 +403,7 @@ CREATE TABLE Courses (
 --   - phone: Contact phone number / Kontakttelefon
 --   - date_of_birth: Student's birth date / Õpilase sünnikuupäev
 --   - enrollment_year: Year the student first enrolled / Aasta, millal õpilane esmakordselt registreerus
+--   - academic_year: Current academic year (1 or 2) / Praegune õppeaasta (1 või 2)
 --   - major_department_id: Student's major/primary department / Õpilase eriala/põhiosakond
 --   - gpa: Grade Point Average (0.00 to 5.00 scale) / Keskmine hinne (0.00 kuni 5.00 skaalal)
 --
@@ -380,6 +421,7 @@ CREATE TABLE Students (
     phone VARCHAR(20),
     date_of_birth DATE,
     enrollment_year INT,
+    academic_year INT DEFAULT 1 CHECK (academic_year IN (1, 2)),
     major_department_id INT,
     gpa DECIMAL(3, 2),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -394,17 +436,16 @@ CREATE TABLE Students (
 -- ============================================================================
 -- Purpose / Eesmärk:
 --   Manages the many-to-many relationship between students and courses.
---   Tracks which students are enrolled in which courses and their grades.
+--   Tracks which students are enrolled in which courses.
 --   Haldab mitme-mitmele suhet õpilaste ja kursuste vahel.
---   Jälgib, millised õpilased on registreerunud millistele kursustele ja nende hindeid.
+--   Jälgib, millised õpilased on registreerunud millistele kursustele.
 --
 -- Fields / Väljad:
 --   - enrollment_id: Unique identifier for the enrollment / Registreerumise unikaalne identifikaator
 --   - student_id: Student enrolled (REQUIRED) / Registreerunud õpilane (KOHUSTUSLIK)
 --   - course_id: Course being taken (REQUIRED) / Võetav kursus (KOHUSTUSLIK)
 --   - enrollment_date: Date when student enrolled in course / Kuupäev, millal õpilane kursusele registreerus
---   - grade: Final grade for the course / Lõplik hinne kursuse eest
---            Examples: "A", "B", "C", "5", "4", "3"
+--   - is_mandatory: Whether this enrollment is for a mandatory course / Kas see registreerimine on kohustusliku kursuse jaoks
 --   - status: Current enrollment status / Praegune registreerumise olek
 --             Examples: "Active" (currently enrolled), "Completed" (finished), 
 --                       "Dropped" (withdrew from course), "Failed" (did not pass)
@@ -413,16 +454,18 @@ CREATE TABLE Students (
 --   - A student can enroll in MULTIPLE courses
 --   - A course can have MULTIPLE students
 --   - A student can enroll in the same course only ONCE (enforced by UNIQUE constraint)
+--   - Grades are tracked separately in the Grades table
 --   - Õpilane võib registreeruda MITMELE kursusele
 --   - Kursusel võib olla MITU õpilast
 --   - Õpilane saab samale kursusele registreeruda ainult ÜÜKS kord (tagatud UNIQUE piiranguga)
+--   - Hindeid jälgitakse eraldi Grades tabelis
 -- ============================================================================
 CREATE TABLE Enrollments (
     enrollment_id INT PRIMARY KEY AUTO_INCREMENT,
     student_id INT NOT NULL,
     course_id INT NOT NULL,
     enrollment_date DATE NOT NULL,
-    grade VARCHAR(2),
+    is_mandatory BOOLEAN DEFAULT FALSE,
     status VARCHAR(20) DEFAULT 'Active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -432,3 +475,160 @@ CREATE TABLE Enrollments (
     INDEX idx_student (student_id),
     INDEX idx_course (course_id)
 );
+
+-- ============================================================================
+-- GRADES TABLE (Hinded)
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Stores individual grades given to students for courses.
+--   Replaces the single grade field in Enrollments to support multiple grades per course.
+--   Salvestab üksikuid hindeid, mis on antud õpilastele kursuste eest.
+--   Asendab Enrollments tabeli üksiku hinde välja, et toetada mitut hinnet kursuse kohta.
+--
+-- Fields / Väljad:
+--   - grade_id: Unique identifier for the grade / Hinde unikaalne identifikaator
+--   - enrollment_id: The enrollment this grade belongs to / Registreerimine, millele see hinne kuulub
+--   - grade_value: The actual grade (e.g., "A", "B", "5", "4") / Tegelik hinne (nt "A", "B", "5", "4")
+--   - grade_type: Type of grade (e.g., "Homework", "Exam", "Final", "Quiz") / Hinde tüüp (nt "Kodutöö", "Eksam", "Lõplik", "Test")
+--   - grade_date: Date when grade was given / Kuupäev, millal hinne anti
+--   - comment: Optional comment about the grade / Valikuline kommentaar hinde kohta
+--   - graded_by: Instructor who gave the grade / Õpetaja, kes hinde andis
+--   - is_current: Whether this is the current/active grade (for tracking corrections) / Kas see on praegune/aktiivne hinne (paranduste jälgimiseks)
+--   - created_at: Automatically set when record is created / Automaatselt seatud, kui kirje luuakse
+--   - updated_at: Automatically updated when record changes / Automaatselt uuendatud, kui kirje muutub
+--
+-- Business Rules / Ärireeglid:
+--   - Multiple grades can exist for the same enrollment (homework, tests, exams)
+--   - When a grade is corrected, the old grade is marked as is_current=FALSE and moved to GradeHistory
+--   - Mitut hinnet võib olla sama registreerimise jaoks (kodutööd, testid, eksamid)
+--   - Kui hinnet parandatakse, märgitakse vana hinne is_current=FALSE ja liigutatakse GradeHistory tabelisse
+-- ============================================================================
+CREATE TABLE Grades (
+    grade_id INT PRIMARY KEY AUTO_INCREMENT,
+    enrollment_id INT NOT NULL,
+    grade_value VARCHAR(5) NOT NULL,
+    grade_type VARCHAR(50) DEFAULT 'Assignment',
+    grade_date DATE NOT NULL,
+    comment TEXT,
+    graded_by INT,
+    is_current BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (enrollment_id) REFERENCES Enrollments(enrollment_id) ON DELETE CASCADE,
+    FOREIGN KEY (graded_by) REFERENCES Instructors(instructor_id) ON DELETE SET NULL,
+    INDEX idx_enrollment (enrollment_id),
+    INDEX idx_grade_date (grade_date),
+    INDEX idx_current (is_current)
+);
+
+-- ============================================================================
+-- GRADE HISTORY TABLE (Hinnete Ajalugu)
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Tracks the history of grade corrections/changes.
+--   When a grade is modified, the previous version is stored here.
+--   Jälgib hinnete paranduste/muudatuste ajalugu.
+--   Kui hinnet muudetakse, salvestatakse eelmine versioon siia.
+--
+-- Fields / Väljad:
+--   - history_id: Unique identifier for this history record / Selle ajalookirje unikaalne identifikaator
+--   - grade_id: Reference to the current grade / Viide praegusele hindele
+--   - old_grade_value: The previous grade value / Eelmine hinde väärtus
+--   - new_grade_value: The new grade value / Uus hinde väärtus
+--   - change_date: When the change was made / Millal muudatus tehti
+--   - changed_by: Instructor who made the change / Õpetaja, kes muudatuse tegi
+--   - change_reason: Reason for the grade change / Hinde muutmise põhjus
+--   - created_at: Automatically set when record is created / Automaatselt seatud, kui kirje luuakse
+--
+-- Business Rules / Ärireeglid:
+--   - Every grade correction is recorded here
+--   - Original grades are preserved
+--   - Iga hinde parandus salvestatakse siia
+--   - Originaalhinded säilitatakse
+-- ============================================================================
+CREATE TABLE GradeHistory (
+    history_id INT PRIMARY KEY AUTO_INCREMENT,
+    grade_id INT NOT NULL,
+    old_grade_value VARCHAR(5) NOT NULL,
+    new_grade_value VARCHAR(5) NOT NULL,
+    change_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    changed_by INT,
+    change_reason TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (grade_id) REFERENCES Grades(grade_id) ON DELETE CASCADE,
+    FOREIGN KEY (changed_by) REFERENCES Instructors(instructor_id) ON DELETE SET NULL,
+    INDEX idx_grade (grade_id),
+    INDEX idx_change_date (change_date)
+);
+
+-- ============================================================================
+-- INSTRUCTOR PAYMENTS TABLE (Õppejõudude Maksed)
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Tracks payments made to instructors.
+--   Total payments should be approximately equal to the instructor's annual salary (±10%).
+--   Jälgib õppejõududele tehtud makseid.
+--   Maksete kogusumma peaks olema ligikaudu võrdne õppejõu aastapalgaga (±10%).
+--
+-- Fields / Väljad:
+--   - payment_id: Unique identifier for the payment / Makse unikaalne identifikaator
+--   - instructor_id: Instructor receiving the payment / Õppejõud, kes makse saab
+--   - payment_date: Date when payment was made / Kuupäev, millal makse tehti
+--   - amount: Payment amount / Makse summa
+--   - payment_type: Type of payment (e.g., "Monthly Salary", "Bonus", "Overtime") / Makse tüüp (nt "Kuupalk", "Boonus", "Ületunnitöö")
+--   - description: Optional description / Valikuline kirjeldus
+--   - fiscal_year: Fiscal year for the payment / Rahandusaasta makse jaoks
+--   - created_at: Automatically set when record is created / Automaatselt seatud, kui kirje luuakse
+--   - updated_at: Automatically updated when record changes / Automaatselt uuendatud, kui kirje muutub
+--
+-- Business Rules / Ärireeglid:
+--   - Total annual payments to an instructor should be within ±10% of their annual salary
+--   - Multiple payments can be made to the same instructor
+--   - Õppejõule tehtud aastamaksete kogusumma peaks olema ±10% piires nende aastapalgast
+--   - Samale õppejõule võib teha mitu makset
+-- ============================================================================
+CREATE TABLE InstructorPayments (
+    payment_id INT PRIMARY KEY AUTO_INCREMENT,
+    instructor_id INT NOT NULL,
+    payment_date DATE NOT NULL,
+    amount DECIMAL(10, 2) NOT NULL,
+    payment_type VARCHAR(50) DEFAULT 'Monthly Salary',
+    description TEXT,
+    fiscal_year INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (instructor_id) REFERENCES Instructors(instructor_id) ON DELETE CASCADE,
+    INDEX idx_instructor (instructor_id),
+    INDEX idx_payment_date (payment_date),
+    INDEX idx_fiscal_year (fiscal_year)
+);
+
+-- ============================================================================
+-- TRIGGERS (Päästikud)
+-- ============================================================================
+
+-- Trigger to automatically enroll students in mandatory courses when they are added
+-- Päästik, mis lisab õpilased automaatselt kohustuslikele kursustele, kui neid lisatakse
+
+DELIMITER //
+
+CREATE TRIGGER auto_enroll_mandatory_courses
+AFTER INSERT ON Students
+FOR EACH ROW
+BEGIN
+    -- Enroll the student in all mandatory courses for their department and academic year
+    -- Registreeri õpilane kõigile oma osakonna ja õppeaasta kohustuslikele kursustele
+    INSERT INTO Enrollments (student_id, course_id, enrollment_date, is_mandatory, status)
+    SELECT 
+        NEW.student_id,
+        mc.course_id,
+        CURDATE(),
+        TRUE,
+        'Active'
+    FROM MandatoryCourses mc
+    WHERE mc.department_id = NEW.major_department_id
+      AND mc.academic_year = NEW.academic_year
+      AND NEW.major_department_id IS NOT NULL;
+END//
+
+DELIMITER ;
