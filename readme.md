@@ -226,6 +226,10 @@ Potentsiaalsed funktsioonid tulevaseks arenduseks:
      ```sql
      source database/sample_data.sql
      ```
+   - (Optional) Test that triggers are working:
+     ```sql
+     source database/test_triggers.sql
+     ```
 
 3. **Configure the backend**
    - Edit `backend/config.php` and update the database credentials:
