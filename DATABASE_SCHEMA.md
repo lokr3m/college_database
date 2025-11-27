@@ -327,6 +327,68 @@ Salvestab üliõilaste infot
 **Relationships / Seosed**:
 - Many-to-One with Departments (major) (mitu-ühele osakondadega - eriala)
 - One-to-Many with Enrollments (üks-mitmele registreerimistega)
+- One-to-Many with StudentHistory (üks-mitmele õpilaste ajalooga)
+
+**History Tracking / Ajaloo Jälgimine**:
+This table has automatic history tracking via database triggers. When a student record is updated or deleted, the previous state is automatically saved to the `StudentHistory` table.
+
+Sellel tabelil on automaatne ajaloo jälgimine andmebaasi triggerite kaudu. Kui õpilase kirjet uuendatakse või kustutatakse, salvestatakse eelmine olek automaatselt `StudentHistory` tabelisse.
+
+---
+
+### 5a. StudentHistory (Õpilaste Ajalugu) - [NEW / UUS]
+**Purpose / Eesmärk**: Tracks the history of changes made to student records
+Jälgib õpilaste kirjete muudatuste ajalugu
+
+**[AUTOMATIC] This table is populated automatically by database triggers!**
+**[AUTOMAATNE] Seda tabelit täidavad automaatselt andmebaasi triggerid!**
+
+| Column | Type | Constraints | Description | Kirjeldus (Estonian) |
+|--------|------|-------------|-------------|----------------------|
+| history_id | INT | PRIMARY KEY, AUTO_INCREMENT | Unique identifier for the history record | Ajalookirje unikaalne identifikaator |
+| student_id | INT | NOT NULL | Reference to the student being tracked | Viide jälgitavale õpilasele |
+| first_name | VARCHAR(50) | NOT NULL | Student's first name at that time | Õpilase eesnimi sel hetkel |
+| last_name | VARCHAR(50) | NOT NULL | Student's last name at that time | Õpilase perekonnanimi sel hetkel |
+| email | VARCHAR(100) | NOT NULL | Contact email at that time | Kontakt-email sel hetkel |
+| phone | VARCHAR(20) | | Contact phone at that time | Kontakttelefon sel hetkel |
+| date_of_birth | DATE | | Birth date at that time | Sünnikuupäev sel hetkel |
+| enrollment_year | INT | | Enrollment year at that time | Registreerimisaasta sel hetkel |
+| major_department_id | INT | | Major department at that time | Eriala osakond sel hetkel |
+| gpa | DECIMAL(3,2) | | GPA at that time | Keskmine hinne sel hetkel |
+| original_created_at | TIMESTAMP | | When the original record was created | Millal algne kirje loodi |
+| original_updated_at | TIMESTAMP | | When the original record was last updated | Millal algset kirjet viimati uuendati |
+| changed_at | TIMESTAMP | DEFAULT CURRENT_TIMESTAMP | When this change occurred | Millal see muudatus toimus |
+| change_type | ENUM('UPDATE', 'DELETE') | NOT NULL, DEFAULT 'UPDATE' | Type of change that triggered this record | Muudatuse tüüp, mis käivitas selle kirje |
+
+**How It Works / Kuidas See Töötab**:
+
+1. **On UPDATE**: When any student record is updated, the trigger `trg_student_history_update` fires and saves the OLD (previous) values to this table.
+   
+   **UPDATE puhul**: Kui mõnda õpilase kirjet uuendatakse, käivitub trigger `trg_student_history_update` ja salvestab VANAD (eelmised) väärtused sellesse tabelisse.
+
+2. **On DELETE**: When a student record is deleted, the trigger `trg_student_history_delete` fires and saves the student's data before deletion.
+   
+   **DELETE puhul**: Kui õpilase kirje kustutatakse, käivitub trigger `trg_student_history_delete` ja salvestab õpilase andmed enne kustutamist.
+
+**Example Usage / Näidis Kasutus**:
+
+```sql
+-- View all history for a specific student
+-- Vaata konkreetse õpilase kogu ajalugu
+SELECT * FROM StudentHistory WHERE student_id = 1 ORDER BY changed_at DESC;
+
+-- See how a student's GPA changed over time
+-- Vaata, kuidas õpilase keskmine hinne muutus aja jooksul
+SELECT changed_at, gpa FROM StudentHistory WHERE student_id = 1 ORDER BY changed_at;
+
+-- Find all deleted students
+-- Leia kõik kustutatud õpilased
+SELECT * FROM StudentHistory WHERE change_type = 'DELETE';
+```
+
+**API Endpoint / API Lõpp-punkt**:
+- `GET /backend/api.php?request=student-history` - Get all history records
+- `GET /backend/api.php?request=student-history/{student_id}` - Get history for specific student
 
 ---
 
@@ -356,6 +418,24 @@ Haldab üliõilaste kursusele registreerimisi (Mitu-mitmele seos)
 
 ---
 
+## Triggers / Triggerid
+
+### trg_student_history_update
+**Purpose / Eesmärk**: Automatically saves student data before UPDATE operations
+Salvestab automaatselt õpilase andmed enne UPDATE toiminguid
+
+- **Event / Sündmus**: BEFORE UPDATE on Students table
+- **Action / Tegevus**: Inserts OLD values into StudentHistory with change_type = 'UPDATE'
+
+### trg_student_history_delete
+**Purpose / Eesmärk**: Automatically saves student data before DELETE operations
+Salvestab automaatselt õpilase andmed enne DELETE toiminguid
+
+- **Event / Sündmus**: BEFORE DELETE on Students table
+- **Action / Tegevus**: Inserts OLD values into StudentHistory with change_type = 'DELETE'
+
+---
+
 ## Indexes
 
 For optimal query performance, the following indexes are created:
@@ -364,6 +444,7 @@ For optimal query performance, the following indexes are created:
 - **Instructors**: `email` (UNIQUE), `department_id`
 - **Courses**: `course_code` (UNIQUE), `department_id`, `instructor_id`
 - **Students**: `email` (UNIQUE), `major_department_id`
+- **StudentHistory**: `student_id`, `changed_at`
 - **Enrollments**: `student_id`, `course_id`, UNIQUE(student_id, course_id)
 
 ## Cascade Rules
@@ -371,6 +452,7 @@ For optimal query performance, the following indexes are created:
 - **ON DELETE CASCADE**: Deleting a department removes all associated instructors, courses, and enrollments
 - **ON DELETE SET NULL**: Deleting an instructor sets course instructor_id to NULL
 - **ON DELETE CASCADE**: Deleting a student or course removes associated enrollments
+- **Note**: StudentHistory records are NOT cascaded - they persist even after student deletion to maintain audit trail
 
 ## Business Rules Enforced by Schema
 

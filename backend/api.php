@@ -41,6 +41,9 @@ switch ($entity) {
     case 'students':
         handleStudents($conn, $method, $id);
         break;
+    case 'student-history':
+        handleStudentHistory($conn, $method, $id);
+        break;
     case 'courses':
         handleCourses($conn, $method, $id);
         break;
@@ -672,5 +675,74 @@ function deleteDepartmentHead($conn, $id) {
     $stmt = $conn->prepare("DELETE FROM DepartmentHeads WHERE department_id = ?");
     $stmt->execute([$id]);
     echo json_encode(['message' => 'Department head removed successfully']);
+}
+
+/**
+ * Handle Student History operations (Read-only)
+ * Õpilaste ajaloo käsitlemine (ainult lugemine)
+ * 
+ * This endpoint provides read-only access to student history records.
+ * History records are created automatically by database triggers when
+ * students are updated or deleted.
+ * 
+ * See lõpp-punkt pakub ainult lugemise juurdepääsu õpilaste ajaloo kirjetele.
+ * Ajalookirjed luuakse automaatselt andmebaasi triggerite poolt, kui
+ * õpilasi uuendatakse või kustutatakse.
+ */
+function handleStudentHistory($conn, $method, $id) {
+    switch ($method) {
+        case 'GET':
+            if ($id) {
+                getStudentHistoryByStudentId($conn, $id);
+            } else {
+                getAllStudentHistory($conn);
+            }
+            break;
+        default:
+            http_response_code(405);
+            echo json_encode(['error' => 'Method not allowed. Student history is read-only.']);
+            break;
+    }
+}
+
+/**
+ * Get all student history records
+ * Kõikide õpilaste ajaloo kirjete saamine
+ */
+function getAllStudentHistory($conn) {
+    $stmt = $conn->query("
+        SELECT sh.*, 
+               d.department_name as major_name,
+               CONCAT(sh.first_name, ' ', sh.last_name) as student_name
+        FROM StudentHistory sh 
+        LEFT JOIN Departments d ON sh.major_department_id = d.department_id 
+        ORDER BY sh.changed_at DESC
+    ");
+    echo json_encode($stmt->fetchAll());
+}
+
+/**
+ * Get history records for a specific student
+ * Konkreetse õpilase ajaloo kirjete saamine
+ */
+function getStudentHistoryByStudentId($conn, $studentId) {
+    $stmt = $conn->prepare("
+        SELECT sh.*, 
+               d.department_name as major_name,
+               CONCAT(sh.first_name, ' ', sh.last_name) as student_name
+        FROM StudentHistory sh 
+        LEFT JOIN Departments d ON sh.major_department_id = d.department_id 
+        WHERE sh.student_id = ?
+        ORDER BY sh.changed_at DESC
+    ");
+    $stmt->execute([$studentId]);
+    $results = $stmt->fetchAll();
+    
+    if (count($results) > 0) {
+        echo json_encode($results);
+    } else {
+        // Return empty array if no history found (not an error)
+        echo json_encode([]);
+    }
 }
 ?>
