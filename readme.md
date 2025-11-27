@@ -186,7 +186,12 @@ Potentsiaalsed funktsioonid tulevaseks arenduseks:
 3. **DepartmentHeads** - Manages department head assignments
 4. **Courses** - Contains course information with department and instructor associations
 5. **Students** - Stores student information
-6. **Enrollments** - Manages student course enrollments (many-to-many relationship)
+6. **StudentHistory** - Tracks historical changes to student records (via triggers)
+7. **Enrollments** - Manages student course enrollments (many-to-many relationship)
+
+**Triggers:**
+- `trg_student_history_update` - Automatically saves student data before UPDATE
+- `trg_student_history_delete` - Automatically saves student data before DELETE
 
 ## 🚀 Setup Instructions
 
@@ -220,6 +225,10 @@ Potentsiaalsed funktsioonid tulevaseks arenduseks:
    - (Optional) Insert sample data:
      ```sql
      source database/sample_data.sql
+     ```
+   - (Optional) Test that triggers are working:
+     ```sql
+     source database/test_triggers.sql
      ```
 
 3. **Configure the backend**
@@ -290,6 +299,7 @@ The backend provides RESTful API endpoints:
 - **Departments**: `/backend/api.php?request=departments`
 - **Instructors**: `/backend/api.php?request=instructors`
 - **Students**: `/backend/api.php?request=students`
+- **Student History**: `/backend/api.php?request=student-history` (read-only)
 - **Courses**: `/backend/api.php?request=courses`
 - **Enrollments**: `/backend/api.php?request=enrollments`
 - **Department Heads**: `/backend/api.php?request=department-heads`
@@ -299,6 +309,8 @@ Each endpoint supports:
 - `POST` - Create new record
 - `PUT` - Update existing record
 - `DELETE` - Delete record
+
+**Note**: Student History endpoint is read-only (GET only). History records are created automatically by database triggers when students are updated or deleted.
 
 ## 🎨 UI Features
 

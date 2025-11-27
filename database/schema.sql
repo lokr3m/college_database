@@ -18,6 +18,7 @@
 DROP TABLE IF EXISTS Enrollments;
 DROP TABLE IF EXISTS DepartmentHeads;
 DROP TABLE IF EXISTS Courses;
+DROP TABLE IF EXISTS StudentHistory;
 DROP TABLE IF EXISTS Students;
 DROP TABLE IF EXISTS Instructors;
 DROP TABLE IF EXISTS Departments;
@@ -388,6 +389,180 @@ CREATE TABLE Students (
     INDEX idx_email (email),
     INDEX idx_major_department (major_department_id)
 );
+
+-- ============================================================================
+-- STUDENT HISTORY TABLE (Õpilaste Ajalugu)
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Tracks the history of changes made to student records.
+--   When a student record is updated, the PREVIOUS state is automatically saved here.
+--   Jälgib õpilaste kirjete muudatuste ajalugu.
+--   Kui õpilase kirjet uuendatakse, salvestatakse EELMINE olek siia automaatselt.
+--
+-- How it works / Kuidas see töötab:
+--   A TRIGGER automatically fires BEFORE any UPDATE to the Students table.
+--   The trigger saves the OLD (previous) values to this history table.
+--   This allows you to see all previous versions of a student's data.
+--   
+--   TRIGGER käivitub automaatselt ENNE iga UPDATE toimingut Students tabelis.
+--   Trigger salvestab VANAD (eelmised) väärtused sellesse ajalootabelisse.
+--   See võimaldab näha kõiki õpilase andmete varasemaid versioone.
+--
+-- Fields / Väljad:
+--   - history_id: Unique identifier for the history record / Ajalookirje unikaalne identifikaator
+--   - student_id: Reference to the student being tracked / Viide jälgitavale õpilasele
+--   - first_name: Student's first name at that time / Õpilase eesnimi sel hetkel
+--   - last_name: Student's last name at that time / Õpilase perekonnanimi sel hetkel
+--   - email: Contact email at that time / Kontakt-email sel hetkel
+--   - phone: Contact phone at that time / Kontakttelefon sel hetkel
+--   - date_of_birth: Birth date at that time / Sünnikuupäev sel hetkel
+--   - enrollment_year: Enrollment year at that time / Registreerimisaasta sel hetkel
+--   - major_department_id: Major department at that time / Eriala osakond sel hetkel
+--   - gpa: GPA at that time / Keskmine hinne sel hetkel
+--   - changed_at: When this change occurred / Millal see muudatus toimus
+--   - change_type: Type of change (UPDATE/DELETE) / Muudatuse tüüp (UPDATE/DELETE)
+--
+-- Example Usage / Näidis Kasutus:
+--   To see all historical versions of student ID 1:
+--   Kõigi õpilase ID 1 ajalooliste versioonide nägemiseks:
+--     SELECT * FROM StudentHistory WHERE student_id = 1 ORDER BY changed_at DESC;
+--
+--   To see what a student's GPA was on a specific date:
+--   Nägemaks, milline oli õpilase keskmine hinne teatud kuupäeval:
+--     SELECT * FROM StudentHistory 
+--     WHERE student_id = 1 AND changed_at <= '2024-01-15' 
+--     ORDER BY changed_at DESC LIMIT 1;
+-- ============================================================================
+CREATE TABLE StudentHistory (
+    history_id INT PRIMARY KEY AUTO_INCREMENT,
+    student_id INT NOT NULL,
+    first_name VARCHAR(50) NOT NULL,
+    last_name VARCHAR(50) NOT NULL,
+    email VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    date_of_birth DATE,
+    enrollment_year INT,
+    major_department_id INT,
+    gpa DECIMAL(3, 2),
+    original_created_at TIMESTAMP,
+    original_updated_at TIMESTAMP,
+    changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    change_type ENUM('UPDATE', 'DELETE') NOT NULL DEFAULT 'UPDATE',
+    INDEX idx_student_history (student_id),
+    INDEX idx_changed_at (changed_at)
+);
+
+-- ============================================================================
+-- TRIGGER: Save Student History on UPDATE
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Automatically saves the OLD (previous) state of a student record 
+--   before it is updated. This ensures no historical data is lost.
+--   
+--   Salvestab automaatselt õpilase kirje VANA (eelmise) oleku
+--   enne selle uuendamist. See tagab, et ajaloolised andmed ei lähe kaduma.
+--
+-- When does it fire? / Millal see käivitub?
+--   BEFORE UPDATE - runs just before any UPDATE statement on Students table
+--   ENNE UPDATE - käivitub vahetult enne iga UPDATE lauset Students tabelil
+--
+-- What does it do? / Mida see teeb?
+--   1. Takes all OLD values from the row being updated
+--      Võtab kõik VANAD väärtused uuendatavast reast
+--   2. Inserts them into StudentHistory with change_type = 'UPDATE'
+--      Sisestab need StudentHistory tabelisse muudatuse tüübiga 'UPDATE'
+--   3. Records the current timestamp as changed_at
+--      Salvestab praeguse ajatempli kui changed_at
+--
+-- Example / Näide:
+--   If you update Alice's GPA from 3.85 to 3.90:
+--   Kui uuendate Alice keskmist hinnet 3.85 -> 3.90:
+--     UPDATE Students SET gpa = 3.90 WHERE student_id = 1;
+--   
+--   The trigger will automatically save Alice's OLD data (with GPA 3.85) 
+--   to StudentHistory before the update happens.
+--   Trigger salvestab automaatselt Alice VANAD andmed (GPA 3.85-ga)
+--   StudentHistory tabelisse enne uuenduse toimumist.
+-- ============================================================================
+DELIMITER //
+
+CREATE TRIGGER trg_student_history_update
+BEFORE UPDATE ON Students
+FOR EACH ROW
+BEGIN
+    INSERT INTO StudentHistory (
+        student_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        date_of_birth,
+        enrollment_year,
+        major_department_id,
+        gpa,
+        original_created_at,
+        original_updated_at,
+        change_type
+    ) VALUES (
+        OLD.student_id,
+        OLD.first_name,
+        OLD.last_name,
+        OLD.email,
+        OLD.phone,
+        OLD.date_of_birth,
+        OLD.enrollment_year,
+        OLD.major_department_id,
+        OLD.gpa,
+        OLD.created_at,
+        OLD.updated_at,
+        'UPDATE'
+    );
+END//
+
+-- ============================================================================
+-- TRIGGER: Save Student History on DELETE
+-- ============================================================================
+-- Purpose / Eesmärk:
+--   Automatically saves the state of a student record before it is deleted.
+--   This allows recovery of deleted student data and audit trail.
+--   
+--   Salvestab automaatselt õpilase kirje oleku enne selle kustutamist.
+--   See võimaldab kustutatud õpilase andmete taastamist ja auditi jälge.
+-- ============================================================================
+CREATE TRIGGER trg_student_history_delete
+BEFORE DELETE ON Students
+FOR EACH ROW
+BEGIN
+    INSERT INTO StudentHistory (
+        student_id,
+        first_name,
+        last_name,
+        email,
+        phone,
+        date_of_birth,
+        enrollment_year,
+        major_department_id,
+        gpa,
+        original_created_at,
+        original_updated_at,
+        change_type
+    ) VALUES (
+        OLD.student_id,
+        OLD.first_name,
+        OLD.last_name,
+        OLD.email,
+        OLD.phone,
+        OLD.date_of_birth,
+        OLD.enrollment_year,
+        OLD.major_department_id,
+        OLD.gpa,
+        OLD.created_at,
+        OLD.updated_at,
+        'DELETE'
+    );
+END//
+
+DELIMITER ;
 
 -- ============================================================================
 -- ENROLLMENTS TABLE (Kursusele registreerimised)
